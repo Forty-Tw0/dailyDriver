@@ -1,0 +1,50 @@
+#set root=hd0,14
+
+#loopback loop /tails-i386-2.6.iso linux (loop)/live/vmlinuz2 boot=live config live-media=removable nopersistent noswap noprompt toram=filesystem.squashfs timezone=Etc/UTC block.events_dfl_poll_msecs=1000 splash nox11autologin module=Tails quiet
+
+#initrd (loop)/live/initrd2.img
+
+#do no think live-media=removable is correct try: fromiso=/dev/sda1/iso/tails.iso or where the iso is
+#live-media=removable is ok if you boot from usb-stick, but in this case you boot from hdd. Remember vmlinuz2 and initrd2 is in safe mode.Try to use those without the 2.
+#dd if=tails.img of=device bs=16M && sync
+
+#https://outflux.net/blog/archives/2017/08/30/grub-and-luks/
+#https://help.ubuntu.com/community/Grub2/ISOBoot
+#https://www.ab9il.net/linux/grub2-iso-booting.html
+#https://www.infosecramblings.com/backtrack/backtrack-5-bootable-usb-thumb-drive-with-full-disk-encryption/
+#https://www.howtogeek.com/196933/how-to-boot-linux-iso-images-directly-from-your-hard-drive/
+
+######################
+device=/dev/sda
+
+# delete all partitions on this device
+for v_partition in $(parted -s $device print|awk '/^ / {print $1}')
+do
+   parted -s $device rm ${v_partition}
+done
+
+# set the partition to GPT and make a legacy bios_grub and EFI partition
+parted -s $device --align optimal -- mklabel gpt \
+ mkpart primary ext4 1MiB 2MiB \
+ set 1 bios_grub on \
+ name 1 grub2-core.img \
+ mkpart primary fat32 2MiB 100MiB \
+ set 2 boot on \
+ set 2 esp on \
+ name 2 EFI \
+ mkpart primary ext4 100MiB 100% \
+ name 3 tools
+
+mkdir /tmp/tooldrive
+mkdir /tmp/tooldrive/boot
+mkdir /tmp/tooldrive/boot/EFI
+# mount the EFI partition
+mount /dev/sda2 /tmp/tooldrive/boot/EFI
+mkdir /tmp/tooldirve/iso
+
+# install grub
+grub-install --efi-directory=/tmp/tooldrive/boot/EFI --skip-fs-probe --removable $device
+
+# https://www.gnu.org/software/grub/manual/grub/grub.html#Multi_002dboot-manual-config
+# https://wiki.archlinux.org/index.php/GRUB#Custom_grub.cfg
+# https://www.ab9il.net/linux/grub2-iso-booting.html

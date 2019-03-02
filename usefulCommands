@@ -1,0 +1,42 @@
+#!/bin/bash
+echo "I would rather not execute this as is."
+exit
+
+# https://wiki.gentoo.org/wiki/Handbook:AMD64/Working/USE
+# https://wiki.gentoo.org/wiki/Gentoo_Cheat_Sheet
+
+# https://wiki.gentoo.org/wiki/Security_Handbook/Staying_up-to-date
+glsa-check -t all
+glsa-check -p $(glsa-check -t all)
+glsa-check -f $(glsa-check -t all)
+
+# fix
+revdep-rebuild -v
+perl-cleaner --all
+
+# update
+emerge --sync
+emerge --oneshot portage
+emerge -auDU --keep-going --with-bdeps=y @world
+
+# clean
+emerge -av --depclean
+
+# check enabled USE flags
+portageq envvar USE | xargs -n 1
+
+# check users of a USE flag
+euse -I <flag>
+quse <flag>
+eix --installed-with-use <flag>
+
+# list all fiels owned by a package
+qlist <package-name>
+
+# manually step through the emerge process, lets you patch the source before compile
+ebuild /usr/portage/<.ebuild> fetch
+ebuild /usr/portage/<.ebuild> unpack
+ebuild /usr/portage/<.ebuild> compile
+ebuild /usr/portage/<.ebuild> install
+ebuild /usr/portage/<.ebuild> qmerge
+ebuild /usr/portage/<.ebuild> clean

@@ -1,0 +1,90 @@
+#!/bin/bash
+echo "I would rather not execute this as is."
+exit
+
+# Some things may request an etc-update for USE values
+
+# Gentoo tools
+emerge app-portage/eix
+emerge app-portage/gentoolkit
+emerge app-admin/sudo
+
+# X
+euse -E X
+emerge x11-base/xorg-server
+cp fs/xorg.conf /etc/X11/xorg.conf.d/xorg.conf
+emerge x11-misc/numlockx
+rc-update add numlock default
+emerge x11-misc/compton
+#emerge --ask x11-misc/xbacklight
+#emerge --ask x11-misc/redshift
+emerge x11-misc/arander
+emerge x11-wm/i3-gaps
+cp fs/i3config /etc/i3/config
+chown root:root /etc/i3/config
+emerge x11-misc/i3status
+cp fs/i3config /etc/i3/i3status
+chown root:root /etc/i3/i3status
+emerge x11-misc/dmenu
+echo "x11-terms/rxvt-unicode 256-color" >> /etc/portage/package.use/overrides
+emerge x11-terms/rxvt-unicode
+#make copy pasta work
+emerge app-misc/tmux
+emerge media-libs/fontconfig-infinality
+eselect infinality set infinality
+eselect lcdfilter set infinality
+# disable all others in fontconfig, maybe need to sudo the xarg'd eselect if you are not root
+eselect fontconfig list | awk '{print $1}' | sed 's/[^0-9]//g' | xargs eselect fontconfig disable
+eselect fontconfig enable 52-infinality.conf
+emerge media-fonts/infinality-ultimate-meta
+emerge --ask media-fonts/noto
+emerge --ask media-fonts/noto-cjk
+#set urxvt font somehow
+#TODO: make the iGPU primary so we can use GPU for PCI passthrough later
+echo "media-libs/imlib2 png gif jpeg" >> /etc/portage/package.use/overrides
+emerge media-gfx/feh
+
+# services
+rc-update add metalog default
+emerge --config sys-libs/timezone-data
+emerge net-misc/openntpd
+rc-update add ntpd default
+emerge sys-apps/firejail
+emerge sys-fs/ntfs3g
+cp fs/udevRules /etc/udev/rules.d/automount.rules
+emerge net-dns/dnscrypt-proxy
+printf "nameserver 127.0.0.1\noptions edns0" > /etc/resolv.conf
+chattr +i /etc/resolv.conf
+sed -i 's/127.0.0.1:53/127.0.0.1:5353/g' /etc/dnscrypt-proxy/dnscrypt-proxy.toml
+sed -i 's/[::1]:53/[::1]:5353/g' /etc/dnscrypt-proxy/dnscrypt-proxy.toml
+sed -i 's/9.9.9.9/1.1.1.1/g' /etc/dnscrypt-proxy/dnscrypt-proxy.toml
+sed -i 's/command="\/usr\/bin\/dnscrypt-proxy/command="firejail \/usr\/bin\/dnscrypt-proxy/g' /etc/init.d/dnscrypt-proxy
+sed -i 's/command_user=/#command_user=/g' /etc/init.d/dnscrypt-proxy
+rc-update add dnscrypt-proxy default
+emerge net-dns/unbound
+sed -i 's/# do-not-query-localhost: yes/do-not-query-localhost: no/g' /etc/unbound/unbound.conf
+printf "\nforward-zone:\nname: \".\"\nforward-addr: 127.0.0.1@5353" >> /etc/unbound/unbound.conf
+#sed -i 's/--exec/--exec firejail/g' /etc/init.d/unbound
+rc-update add unbound default
+echo "net-wireless/wpa_supplicant qt5" > /etc/portage/package.use/overrides
+emerge net-wireless/wpa_supplicant
+printf "ctrl_interface=DIR=/run/wpa_supplicant GROUP=wheel\nupdate_config=1" > /etc/wpa_supplicant/wpa_supplicant.conf
+chmod 600 /etc/wpa_supplicant/wpa_supplicant.conf
+#echo "wpa_supplicant_args=\"-B -M -c/etc/wpa_supplicant/wpa_supplicant.conf\"" > /etc/conf.d/wpa_supplicant
+printf "modules_wlan0=\"wpa_supplicant\"\nconfig_wlan0=\"dhcp\"" > /etc/conf.d/net
+rc-update add wpa_supplicant default
+echo "net-print/cups usb" >> /etc/portage/package.use/overrides
+emerge net-print/hplip
+#hp-setup
+emerge net-print/cups
+rc-update add cupsd default
+rc-update add cups-browsed default
+# http://localhost:631/
+#emerge x11-misc/x11vnc
+#sshd
+emerge sys-auth/consolekit
+rc-update add consolekit default
+emerge media-sound/pulseaudio
+sed -i 's/^load-module module-native-protocol-unix$/load-module module-native-protocol-unix auth-anonymous=1/g' /etc/pulse/default.pa
+emerge media-sound/pavucontrol
+gpasswd -d root audio

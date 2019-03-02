@@ -1,0 +1,11 @@
+#!/bin/bash
+echo "I would reather not execute this as is."
+exit
+
+Todo: LUKS FDE
+
+First we must create and boot into a live Gentoo system.
+curl http://distfiles.gentoo.org/releases/amd64/autobuilds/$(curl -s http://distfiles.gentoo.org/releases/amd64/autobuilds/latest-iso.txt | grep install-amd64-minimal | awk '{print $1}') > minimal.iso
+dd if=minimal.iso of=/dev/sdX
+Boot it and run installGentoo.sh
+Todo: GRUB2 customisation

@@ -1,0 +1,105 @@
+#!/bin/bash
+echo "I would rather not execute this as is."
+exit
+
+# system tools
+#rc-update add sshd default
+emerge x11-apps/mesa-progs
+emerge dev-vcs/git
+emerge dev-util/valgrind
+emerge sys-devel/gdb
+emerge sys-fs/ncdu
+emerge sys-apps/usbutils
+emerge sys-process/lsof
+emerge sys-process/htop
+emerge net-analyzer/nmap
+emerge net-analyzer/tcpdump
+emerge net-analyzer/wireshark
+emerge sys-fs/cryptsetup
+emerge sys-block/gparted
+emerge dev-util/cwdiff
+emerge app-misc/icdiff
+
+# user
+echo "Cyberia" > /etc/hostname
+echo "%wheel ALL=(ALL) ALL" > /etc/sudoers.d/sudo
+useradd -ou 4242 -s /bin/bash -G portage,usb,video,wheel,cdrom,ff,wireshark,lpadmin ljosalfur
+passwd ljosalfur
+cp fs/xinitrc /home/ljosalfur/.xinitrc
+chown ljosalfur:ljosalfur /home/ljosalfur/.xinitrc
+
+# applications
+emerge app-editors/nano
+emerge app-editors/vim
+echo "www-client/w3m imlib" >> /etc/portage/package.use/overrides
+emerge www-client/w3m
+emerge app-misc/ranger
+printf "\n# Ranger options\nalias ranger=\"ranger --cmd='set show_hidden true' --cmd='set vcs_aware true' --cmd='set vcs_backend_git enabled' --cmd='set preview_images_method w3m' --cmd='set preview_images true'\"\n" >> /home/ljosalfur/.bashrc
+emerge net-p2p/rtorrent
+emerge sys-boot/unetbootin
+echo "media-video/ffmpeg openssl" >> /etc/portage/package.use/overrides
+emerge media-video/ffmpeg
+echo "media-video/mpv dvd" >> /etc/portage/package.use/overrides
+emerge media-video/mpv
+emerge net-misc/youtube-dl
+echo "net-misc/youtube-viewer gtk" >> /etc/portage/package.use/overrides
+emerge net-misc/youtube-viewer
+emerge media-sound/audacity
+emerge media-gfx/gnome-screenshot
+emerge media-gfx/gimp
+echo "app-text/poppler cairo" >> /etc/portage/package.use/overrides
+emerge app-text/evince
+#emerge --ask app-text/calibre # for ebooks
+emerge --ask app-office/libreoffice
+emerge --ask mail-client/thunderbird
+emerge --ask net-im/slack-bin
+printf "\n# Slack\nalias slack=\"(cd /opt/slack && ./slack &)\"\n" >> /home/ljosalfur/.bashrc
+
+# Use Oracle java for thinkorswim
+echo "dev-java/oracle-jre-bin javafx" >> /etc/portage/package.use/overrides
+emerge --ask dev-java/oracle-jre-bin
+wget -O /tmp/tos.sh https://mediaserver.thinkorswim.com/installer/InstFiles/thinkorswim_installer.sh
+sh /tmp/tos.sh
+printf "\n# ThinkOrSwim\nalias thinkorswim=\"(cd ~/thinkorswim && /opt/oracle-jre-bin-1.8.0.181/bin/java -jar launcher.jar)\"\n" >> /home/ljosalfur/.bashrc
+printf "\n# RuneLite\nalias osrs=\"(cd ~/ && /opt/oracle-jre-bin-1.8.0.181/bin/java -jar RuneLite.jar)\"\n" >> /home/ljosalfur/.bashrc
+
+# firefox in a sandbox
+emerge www-client/firefox
+groupadd ff
+chmod u+x /usr/lib64/firefox/firefox
+qlist firefox | xargs chown root:ff
+printf "\n# FireFox Sandbox\nalias firefox=\"firejail /usr/bin/firefox\"\n" >> /home/ljosalfur/.bashrc
+echo "about:config browser.tabs.remote.autostart=false" # This is required to stop tabs from crashing
+# fix audio in firejail, not ideal
+sed -i 's/seccomp/#seccomp/g' /etc/firejail/firefox.profile
+# make links (like in slack) open with firefox
+
+# Steam
+wget -P /etc/portage/repos.conf/ https://raw.githubusercontent.com/anyc/steam-overlay/master/steam-overlay.conf
+emaint sync --repo steam-overlay
+emerge --ask games-util/steam-launcher
+
+# QEMU
+# https://www.reddit.com/r/VFIO/comments/74vokw/improved_pulse_audio_driver_for_qemu/
+# https://github.com/spheenik/qemu
+cp fs/blacklist.conf /etc/modprobe.d/blacklist.conf
+mkdir -p /etc/portage/patches/app-emulation/qemu
+cp fs/qemu_audio.patch /etc/portage/patches/app-emulation/qemu
+echo "app-emulation/qemu usb pulseaudio" >> /etc/portage/package.use/overrides
+emerge app-emulation/qemu
+emerge sys-firmware/edk2-ovmf
+emerge sys-apps/usermode-utilities
+
+#follow up actions
+echo "cp fs/user.js to your firefox profile"
+echo "Install firefox extensions:"
+echo "HTTPS Everywhere"
+echo "uBlock Origin"
+echo "Privacy Badger"
+echo "Decentraleyes"
+echo "Disconnect"
+echo "Firefox Lightbeam"
+echo "Google Redirects Fixer & Tracking Remover"
+echo "CanvasBlocker"
+echo "uMatrix"
+echo "Greasemonkey"

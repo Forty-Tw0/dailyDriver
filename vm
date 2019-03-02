@@ -1,0 +1,134 @@
+#!/bin/bash
+
+# Recompile kernel with these flags: https://wiki.installgentoo.com/index.php/PCI_passthrough
+#  and CONFIG_IP_NF_NAT+CONFIG_IP_NF_TARGET_MASQUERADE
+# boot kernel with: video=efifb:off,vesafb:off iommu=on intel_iommu=on amd_iommu=on pcie_acs_override=downstream
+# Dump ROM for passthorugh, you might need to put your GPU in PCIeslot2 and have another GPU in slot1 while booted into a live CD for this to work!
+#echo 1 > /sys/bus/pci/devices/$VGA_DEVICE/rom
+#cat /sys/bus/pci/devices/$VGA_DEVICE/rom > /tmp/gpu.rom
+#echo 0 > /sys/bus/pci/devices/$VGA_DEVICE/rom
+
+#for iommu_group in $(find /sys/kernel/iommu_groups/ -maxdepth 1 -mindepth 1 -type d); do echo "IOMMU group $(basename "$iommu_group")"; for device in $(ls -1 "$iommu_group"/devices/); do echo -n $'\t'; lspci -nns "$device"; done; done
+VGA_DRIVER=nouveau
+VGA_DEVICE=0000:01:00.0
+HDMI_AUDIO_DEVICE=0000:01:00.1
+
+# get your uid so we can find your pulse socket
+qemu_audio_env="QEMU_AUDIO_DRV=pa QEMU_PA_SERVER=/run/user/$(id -u)/pulse/native"
+
+echo Refresh sudo timeout to avoid a race condition.
+sudo -v
+
+# Unbinds a device and loads the driver specified.
+changeDriver() {
+	dev="$1"
+	driver="$2"
+
+	if [ -z $driver ] | [ -z $dev ];
+	then
+		return 1
+	fi
+
+	vendor=$(cat /sys/bus/pci/devices/$dev/vendor)
+	device=$(cat /sys/bus/pci/devices/$dev/device)
+
+	echo -n Unbinding $vendor:$device ...
+
+	if [ -e /sys/bus/pci/devices/$dev/driver ]; then
+		echo $dev | sudo tee /sys/bus/pci/devices/$dev/driver/unbind > /dev/null
+		while [ -e /sys/bus/pci/devices/$dev/driver ]; do
+			sleep 0.5
+			echo -n .
+		done
+	fi
+	echo " OK!"
+
+	echo -n Binding \'$driver\' to $vendor:$device ...
+	echo $vendor $device | sudo tee /sys/bus/pci/drivers/$driver/new_id > /dev/null
+	#this bit gives a false error when binding (or at least one I don't care about)
+	echo $dev | tee /sys/bus/pci/drivers/$driver/bind > /dev/null
+
+	echo " OK!"
+
+	return 0
+}
+
+# save X config
+#savedXconfig=$(while read -r line ; do printf " %s" $line; done <<< `xrandr --current | grep " connected" | awk '{split($3,sizepos,"+"); print "--output "$1" --mode "sizepos[1]" --pos "sizepos[2]"x"sizepos[3]}'`)
+#echo Saved X config as \'xrandr $savedXconfig\'
+# detatch from X, assuming the first monitor is the primary host monitor
+#for monitor in `xrandr --listactivemonitors | awk 'NR>2 {print $4}'`; do xrandr --output $monitor --off; done
+
+#echo 0 > /sys/class/vtconsole/vtcon0/bind
+#echo 0 > /sys/class/vtconsole/vtcon1/bind
+#echo efi-framebuffer.0 > /sys/bus/platform/drivers/efi-framebuffer/unbind
+# echo 10de 1b06 > /sys/bus/pci/drivers/vfio-pci/new_id
+# echo 0000:01:00.0 > /sys/bus/pci/devices/0000:01:00.0/driver/unbind
+# echo 0000:01:00.0 > /sys/bus/pci/drivers/vfio-pci/bind
+# echo 10de 1b06 > /sys/bus/pci/drivers/vfio-pci/remove_id
+
+# Unbind specified graphics card and audio device.
+echo Unbinding GPU
+changeDriver $VGA_DEVICE vfio-pci
+changeDriver $HDMI_AUDIO_DEVICE vfio-pci
+
+# network stuff
+sudo modprobe vhost_net
+sudo modprobe tun
+sudo tunctl -t vmtap10
+sudo ip link set dev vmtap10 address 42:42:42:42:42:10
+sudo ifconfig vmtap10 192.168.42.1 up
+echo 1 | sudo tee /proc/sys/net/ipv4/ip_forward > /dev/null
+sudo iptables -t nat -A POSTROUTING -o eno1 -j MASQUERADE
+#sudo iptables -t nat -A POSTROUTING -o wlp6s0 -j MASQUERADE
+sudo iptables -A FORWARD -i vmtap10 -j ACCEPT
+sudo iptables -A FORWARD -o vmtap10 -m state --state RELATED,ESTABLISHED -j ACCEPT
+
+# set hugepages size to 1G at boot
+echo Allocating huge pages
+#echo 8192 | sudo tee /proc/sys/vm/nr_hugepages > /dev/null
+
+# QEMU stuff
+sudo $qemu_audio_env qemu-system-x86_64 -monitor stdio -vnc :1 -vga std \
+-machine type=q35,accel=kvm,kernel_irqchip=on \
+-drive if=pflash,format=raw,file=/usr/share/edk2-ovmf/OVMF.fd \
+-enable-kvm -rtc base=localtime -usb -soundhw hda \
+-smbios type=0,vendor="American Megatrends Inc.",version=0403,date=04/07/2015,release=4.6,uefi=on \
+-smbios type=1,manufacturer=ASUS,product="All Series",version="System Version",serial="System Serial Number" \
+-smbios type=2,manufacturer="ASUSTeK COMPUTER INC.",product="Z97-E/USB 3.1",version="Rev X.0x",serial=150544144600157,asset=fortytwo,location=fortytwo \
+-cpu host,kvm=off,hv_relaxed,hv_spinlocks=0x1fff,hv_vapic,hv_time,hv_vendor_id=424242424242 -smp sockets=1,cores=3,threads=2 \
+-m 12G \
+-device vfio-pci,host=$VGA_DEVICE,x-vga=on,multifunction=off,rombar=1,romfile=./gpu.rom \
+-device usb-host,hostbus=3,hostport=3 \
+-device usb-host,hostbus=3,hostport=4 \
+-device usb-host,vendorid=1133,productid=49685 \
+-drive file=/dev/disk/by-partuuid/385c0f02-3e9e-4c44-8613-92c40e35582a,format=raw,cache=none \
+-netdev tap,id=tap0,ifname=vmtap10,script=no,downscript=no,vhost=on -device virtio-net-pci,netdev=tap0,mac=42:42:42:42:42:42 \
+-netdev user,id=samba,smb=/samba -device virtio-net-pci,netdev=samba \
+#-drive file=/dev/sda4,format=raw,cache=none \
+
+#-mem-path /dev/hugepages \
+
+# strace -F -e open dmidecode
+# https://wiki.installgentoo.com/index.php/PCI_passthrough#CPU_affinity_pinning
+# https://wiki.archlinux.org/index.php/PCI_passthrough_via_OVMF#Further_tuning
+# https://wiki.archlinux.org/index.php/PCI_passthrough_via_OVMF#Passing_VM_audio_to_host_via_PulseAudio
+
+echo Refresh sudo timeout to avoid a race condition.
+sudo -v
+
+echo Freeing huge pages
+echo 0 | sudo tee /proc/sys/vm/nr_hugepages > /dev/null
+
+echo Cleaning up network
+sudo iptables -F
+sudo iptables -t nat -F POSTROUTING
+sudo ip link delete vmtap10
+sudo tunctl -d vmtap10
+
+echo Rebinding GPU
+changeDriver $VGA_DEVICE $VGA_DRIVER
+changeDriver $HDMI_AUDIO_DEVICE $AUDIO_DRIVER
+
+# enable monitors in X
+xrandr $savedXconfig

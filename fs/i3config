@@ -1,0 +1,120 @@
+focus_follows_mouse no
+mouse_warping none
+focus_on_window_activation urgent
+focus_wrapping no
+no_focus [class=".*"]
+
+# KEY BINDINGS
+
+# Windows key as modifier
+set $mod Mod4
+
+bindsym XF86AudioRaiseVolume exec pactl set-sink-volume @DEFAULT_SINK@ +2% && pactl set-sink-mute @DEFAULT_SINK@ 0
+bindsym XF86AudioLowerVolume exec pactl set-sink-volume @DEFAULT_SINK@ -2% && pactl set-sink-mute @DEFAULT_SINK@ 0
+bindsym XF86AudioMute exec pactl set-sink-mute @DEFAULT_SINK@ toggle
+bindsym       Print exec --no-startup-id gnome-screenshot -f ~/screenshots/$(date).png
+bindsym Shift+Print exec --no-startup-id gnome-screenshot --area -f ~/screenshots/$(date).png
+
+bindsym $mod+F5 exec xrandr --listmonitors | awk '{print $4}' | xargs -i xrandr --output {} --brightness 0.2
+bindsym $mod+F6 exec xrandr --listmonitors | awk '{print $4}' | xargs -i xrandr --output {} --brightness 0.42
+bindsym $mod+F7 exec xrandr --listmonitors | awk '{print $4}' | xargs -i xrandr --output {} --brightness 0.8
+bindsym $mod+F8 exec xrandr --listmonitors | awk '{print $4}' | xargs -i xrandr --output {} --brightness 1
+
+bindsym $mod+Return exec urxvt -depth 24 -bg 0 -fg 15 +sb -si -sw -sk -sl 424242 -fb 42 -keysym.Shift-Control-C eval:selection_to_clipboard -keysym.Shift-Control-V eval:paste_clipboard -print-pipe "cat > /dev/null" -tn xterm-256color
+bindsym $mod+Shift+q kill
+bindsym $mod+d exec dmenu_run
+bindsym $mod+Shift+c reload
+bindsym $mod+Shift+r restart
+bindsym $mod+Shift+e exec "i3-nagbar -t warning -m 'Exit i3 and end X session?' -b 'Yes, exit i3' 'i3-msg exit'"
+
+bindsym $mod+Left         focus left
+bindsym $mod+Down         focus down
+bindsym $mod+Up           focus up
+bindsym $mod+Right        focus right
+
+bindsym $mod+Shift+Left   move left
+bindsym $mod+Shift+Down   move down
+bindsym $mod+Shift+Up     move up
+bindsym $mod+Shift+Right  move right
+
+bindsym $mod+h            split h
+bindsym $mod+v            split v
+
+bindsym $mod+Shift+space  floating toggle
+bindsym $mod+f            fullscreen toggle
+
+bindsym $mod+s            layout stacking
+bindsym $mod+w            layout tabbed
+bindsym $mod+e            layout toggle split
+
+# use Mouse+$mod to drag floating windows to their wanted position
+floating_modifier $mod
+
+bindsym $mod+space        focus mode_toggle
+bindsym $mod+a            focus parent
+#bindsym $mod+d           focus child
+
+#bindsym $mod+Tab       workspace back_and_forth
+bindsym $mod+Tab         workspace next
+bindsym $mod+Shift+Tab   workspace prev
+
+bindsym $mod+1 workspace 1
+bindsym $mod+2 workspace 2
+bindsym $mod+3 workspace 3
+bindsym $mod+4 workspace 4
+bindsym $mod+5 workspace 5
+bindsym $mod+6 workspace 6
+bindsym $mod+7 workspace 7
+bindsym $mod+8 workspace 8
+bindsym $mod+9 workspace 9
+bindsym $mod+0 workspace 0
+
+bindsym $mod+Shift+1 move container to workspace 1
+bindsym $mod+Shift+2 move container to workspace 2
+bindsym $mod+Shift+3 move container to workspace 3
+bindsym $mod+Shift+4 move container to workspace 4
+bindsym $mod+Shift+5 move container to workspace 5
+bindsym $mod+Shift+6 move container to workspace 6
+bindsym $mod+Shift+7 move container to workspace 7
+bindsym $mod+Shift+8 move container to workspace 8
+bindsym $mod+Shift+9 move container to workspace 9
+bindsym $mod+Shift+0 move container to workspace 0
+
+# START AND CONFIGURE i3bar
+
+# set window colors
+# class                 border   backgnd  text     indicator
+client.focused          #00ff00  #00ff00  #000000  #00ff00
+client.unfocused        #004200  #004200  #00ff00  #004200
+client.focused_inactive #004200  #004200  #00ff00  #004200
+client.urgent           #ff0000  #ff0000  #000000  #ff0000
+client.background       #ffffff
+for_window [class="^.*"] border pixel 1
+
+# i3-gaps
+smart_borders on
+smart_gaps on
+gaps inner 0
+
+bar {
+        # start using custom config file (full path)
+        status_command       i3status -c /etc/i3/i3status
+        tray_padding         3
+        font pango:Roboto    9
+
+	position bottom
+        height 25
+
+	colors {
+		# whole color settings
+		background   #000000
+		statusline   #00ff00
+		separator    #ffffff
+
+		# type             border   backgnd  font
+		focused_workspace  #00ff00  #00ff00  #000000
+		active_workspace   #00ff00  #00ff00  #000000
+		inactive_workspace #004200  #004200  #000000
+		urgent_workspace   #ff0000  #ff0000  #000000
+	}
+}

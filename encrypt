@@ -1,0 +1,8 @@
+cryptsetup luksFormat --use-random -s 512 -h sha512 --iter-time=42042 /dev/nvme0n1 --header header
+# https://wiki.gentoo.org/wiki/Dm-crypt_full_disk_encryption
+# https://blog.linuxbrujo.net/posts/plausible-deniability-with-luks/
+# https://wiki.archlinux.org/index.php/Dm-crypt/Encrypting_an_entire_system#Encrypted_boot_partition_.28GRUB.29
+# https://wiki.archlinux.org/index.php/dm-crypt/Device_encryption#Encryption_options_for_LUKS_mode
+# https://wiki.archlinux.org/index.php/Dm-crypt/Specialties#Encrypted_.2Fboot_and_a_detached_LUKS_header_on_USB
+# https://michael-herbst.com/linux-ssds-and-disk-encryption.html
+# https://www.reddit.com/r/archlinux/comments/7np36m/detached_luks_header_full_disk_encryption_with/
