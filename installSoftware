@@ -2,6 +2,10 @@
 echo "I would rather not execute this as is."
 exit
 
+# graphical libraries
+echo "x11-libs/gtk+ cups" >> /etc/portage/package.use/overrides
+emerge x11-libs/gtk+
+
 # system tools
 #rc-update add sshd default
 emerge x11-apps/mesa-progs
@@ -45,7 +49,7 @@ emerge net-misc/youtube-dl
 echo "net-misc/youtube-viewer gtk" >> /etc/portage/package.use/overrides
 emerge net-misc/youtube-viewer
 emerge media-sound/audacity
-emerge media-gfx/gnome-screenshot
+echo "media-gfx/gimp exif jpeg pdf png svg" >> /etc/portage/package.use/overrides
 emerge media-gfx/gimp
 echo "app-text/poppler cairo" >> /etc/portage/package.use/overrides
 emerge app-text/evince
