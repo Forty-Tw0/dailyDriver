@@ -32,6 +32,8 @@ passwd ljosalfur
 cp fs/xinitrc /home/ljosalfur/.xinitrc
 chown ljosalfur:ljosalfur /home/ljosalfur/.xinitrc
 
+printf "\n# alias for suspend to ram\nalias slp=\"echo mem | sudo tee /sys/power/state > /dev/null\"" >> /home/ljosalfur/.bashrc
+
 # applications
 emerge app-editors/nano
 emerge app-editors/vim
