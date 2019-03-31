@@ -6,21 +6,26 @@ exit
 # https://wiki.gentoo.org/wiki/Gentoo_Cheat_Sheet
 
 # https://wiki.gentoo.org/wiki/Security_Handbook/Staying_up-to-date
+emaint -a sync
 glsa-check -t all
 glsa-check -p $(glsa-check -t all)
-glsa-check -f $(glsa-check -t all)
-
-# fix
-revdep-rebuild -v
-perl-cleaner --all
+# glsa-check -f $(glsa-check -t all)
 
 # update
-emerge --sync
-emerge --oneshot portage
-emerge -auDU --keep-going --with-bdeps=y @world
+emaint -a sync
+emerge --ask --oneshot portage
+emerge --ask --update --changed-use --deep --keep-going --with-bdeps=y @world
+# dont forget to merge /etc also dont forget that it will overwrite your config instead of actually automerging...
+
+# fix
+revdep-rebuild -v portage_options='--ask'
+perl-cleaner --all
 
 # clean
-emerge -av --depclean
+emerge --ask --depclean -v
+
+exit
+############################################
 
 # check enabled USE flags
 portageq envvar USE | xargs -n 1
@@ -30,8 +35,11 @@ euse -I <flag>
 quse <flag>
 eix --installed-with-use <flag>
 
-# list all fiels owned by a package
+# list all files owned by a package
 qlist <package-name>
+
+# show parents of the package
+equery d <package-name>
 
 # manually step through the emerge process, lets you patch the source before compile
 ebuild /usr/portage/<.ebuild> fetch
@@ -40,3 +48,6 @@ ebuild /usr/portage/<.ebuild> compile
 ebuild /usr/portage/<.ebuild> install
 ebuild /usr/portage/<.ebuild> qmerge
 ebuild /usr/portage/<.ebuild> clean
+
+# uninstall
+emerge --depclean <package>

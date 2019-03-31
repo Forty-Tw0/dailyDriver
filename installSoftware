@@ -23,6 +23,7 @@ emerge sys-fs/cryptsetup
 emerge sys-block/gparted
 emerge dev-util/cwdiff
 emerge app-misc/icdiff
+emerge app-arch/bzip2
 
 # user
 echo "Cyberia" > /etc/hostname
@@ -45,7 +46,7 @@ emerge net-p2p/rtorrent
 emerge sys-boot/unetbootin
 echo "media-video/ffmpeg openssl" >> /etc/portage/package.use/overrides
 emerge media-video/ffmpeg
-echo "media-video/mpv dvd" >> /etc/portage/package.use/overrides
+echo "media-video/mpv dvd pulseaudio" >> /etc/portage/package.use/overrides
 emerge media-video/mpv
 emerge net-misc/youtube-dl
 echo "net-misc/youtube-viewer gtk" >> /etc/portage/package.use/overrides
@@ -70,6 +71,7 @@ printf "\n# ThinkOrSwim\nalias thinkorswim=\"(cd ~/thinkorswim && /opt/oracle-jr
 printf "\n# RuneLite\nalias osrs=\"(cd ~/ && /opt/oracle-jre-bin-1.8.0.181/bin/java -jar RuneLite.jar)\"\n" >> /home/ljosalfur/.bashrc
 
 # firefox in a sandbox
+echo "www-client/firefox pulseaudio" >> /etc/portage/package.use/overrides
 emerge www-client/firefox
 groupadd ff
 chmod u+x /usr/lib64/firefox/firefox

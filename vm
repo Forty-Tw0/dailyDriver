@@ -85,11 +85,11 @@ sudo iptables -A FORWARD -i vmtap10 -j ACCEPT
 sudo iptables -A FORWARD -o vmtap10 -m state --state RELATED,ESTABLISHED -j ACCEPT
 
 # set hugepages size to 1G at boot
-echo Allocating huge pages
-#echo 8192 | sudo tee /proc/sys/vm/nr_hugepages > /dev/null
+echo Allocating 16G worth of huge pages
+#echo 16384 | sudo tee /proc/sys/vm/nr_hugepages > /dev/null
 
 # QEMU stuff
-sudo $qemu_audio_env qemu-system-x86_64 -monitor stdio -vnc :1 -vga std \
+sudo $qemu_audio_env qemu-system-x86_64 -monitor stdio -vnc :1 -vga none \
 -machine type=q35,accel=kvm,kernel_irqchip=on \
 -drive if=pflash,format=raw,file=/usr/share/edk2-ovmf/OVMF.fd \
 -enable-kvm -rtc base=localtime -usb -soundhw hda \
@@ -97,7 +97,7 @@ sudo $qemu_audio_env qemu-system-x86_64 -monitor stdio -vnc :1 -vga std \
 -smbios type=1,manufacturer=ASUS,product="All Series",version="System Version",serial="System Serial Number" \
 -smbios type=2,manufacturer="ASUSTeK COMPUTER INC.",product="Z97-E/USB 3.1",version="Rev X.0x",serial=150544144600157,asset=fortytwo,location=fortytwo \
 -cpu host,kvm=off,hv_relaxed,hv_spinlocks=0x1fff,hv_vapic,hv_time,hv_vendor_id=424242424242 -smp sockets=1,cores=3,threads=2 \
--m 12G \
+-m 16G \
 -device vfio-pci,host=$VGA_DEVICE,x-vga=on,multifunction=off,rombar=1,romfile=./gpu.rom \
 -device usb-host,hostbus=3,hostport=3 \
 -device usb-host,hostbus=3,hostport=4 \

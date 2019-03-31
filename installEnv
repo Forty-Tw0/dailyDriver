@@ -23,7 +23,7 @@ emerge x11-wm/i3-gaps
 cp fs/i3config /etc/i3/config
 chown root:root /etc/i3/config
 emerge x11-misc/i3status
-cp fs/i3config /etc/i3/i3status
+cp fs/i3status /etc/i3/i3status
 chown root:root /etc/i3/i3status
 emerge x11-misc/dmenu
 echo "x11-terms/rxvt-unicode 256-color" >> /etc/portage/package.use/overrides
@@ -56,7 +56,7 @@ emerge net-dns/dnscrypt-proxy
 printf "nameserver 127.0.0.1\noptions edns0" > /etc/resolv.conf
 chattr +i /etc/resolv.conf
 sed -i 's/127.0.0.1:53/127.0.0.1:5353/g' /etc/dnscrypt-proxy/dnscrypt-proxy.toml
-sed -i 's/[::1]:53/[::1]:5353/g' /etc/dnscrypt-proxy/dnscrypt-proxy.toml
+sed -i 's/\[::1\]:53/\[::1\]:5353/g' /etc/dnscrypt-proxy/dnscrypt-proxy.toml
 sed -i 's/9.9.9.9/1.1.1.1/g' /etc/dnscrypt-proxy/dnscrypt-proxy.toml
 sed -i 's/command="\/usr\/bin\/dnscrypt-proxy/command="firejail \/usr\/bin\/dnscrypt-proxy/g' /etc/init.d/dnscrypt-proxy
 sed -i 's/command_user=/#command_user=/g' /etc/init.d/dnscrypt-proxy
