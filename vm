@@ -86,6 +86,7 @@ sudo iptables -A FORWARD -o vmtap10 -m state --state RELATED,ESTABLISHED -j ACCE
 
 # set hugepages size to 1G at boot
 echo Allocating 16G worth of huge pages
+#echo 16 | sudo tee /sys/kernel/mm/hugepages/hugepages-1048576kB/nr_hugepages > /dev/null
 #echo 16384 | sudo tee /proc/sys/vm/nr_hugepages > /dev/null
 
 # QEMU stuff
@@ -97,8 +98,8 @@ sudo $qemu_audio_env qemu-system-x86_64 -monitor stdio -vnc :1 -vga none \
 -smbios type=1,manufacturer=ASUS,product="All Series",version="System Version",serial="System Serial Number" \
 -smbios type=2,manufacturer="ASUSTeK COMPUTER INC.",product="Z97-E/USB 3.1",version="Rev X.0x",serial=150544144600157,asset=fortytwo,location=fortytwo \
 -cpu host,kvm=off,hv_relaxed,hv_spinlocks=0x1fff,hv_vapic,hv_time,hv_vendor_id=424242424242 -smp sockets=1,cores=3,threads=2 \
--m 16G \
 -device vfio-pci,host=$VGA_DEVICE,x-vga=on,multifunction=off,rombar=1,romfile=./gpu.rom \
+-m 24G \
 -device usb-host,hostbus=3,hostport=3 \
 -device usb-host,hostbus=3,hostport=4 \
 -device usb-host,vendorid=1133,productid=49685 \
@@ -118,7 +119,8 @@ echo Refresh sudo timeout to avoid a race condition.
 sudo -v
 
 echo Freeing huge pages
-echo 0 | sudo tee /proc/sys/vm/nr_hugepages > /dev/null
+echo 0 | sudo tee /sys/kernel/mm/hugepages/hugepages-1048576kB/nr_hugepages > /dev/null
+#echo 0 | sudo tee /proc/sys/vm/nr_hugepages > /dev/null
 
 echo Cleaning up network
 sudo iptables -F
