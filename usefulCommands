@@ -13,8 +13,8 @@ glsa-check -p $(glsa-check -t all)
 
 # update
 emaint -a sync
-emerge --ask --oneshot portage
-emerge --ask --update --changed-use --deep --keep-going --with-bdeps=y @world
+ACCEPT_LICENSE="" emerge --ask --update --verbose-conflicts --autounmask-write --changed-use --deep --keep-going --with-bdeps=y @world
+# I think I had tons of conflicts with autounmask-write last time...
 # dont forget to merge /etc also dont forget that it will overwrite your config instead of actually automerging...
 
 # fix
@@ -23,6 +23,7 @@ perl-cleaner --all
 
 # clean
 emerge --ask --depclean -v
+portpeek -a #-f
 
 exit
 ############################################
@@ -50,4 +51,4 @@ ebuild /usr/portage/<.ebuild> qmerge
 ebuild /usr/portage/<.ebuild> clean
 
 # uninstall
-emerge --depclean <package>
+emerge --ask --depclean -v <package>

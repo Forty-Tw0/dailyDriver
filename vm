@@ -14,7 +14,15 @@ VGA_DEVICE=0000:01:00.0
 HDMI_AUDIO_DEVICE=0000:01:00.1
 
 # get your uid so we can find your pulse socket
-qemu_audio_env="QEMU_AUDIO_DRV=pa QEMU_PA_SERVER=/run/user/$(id -u)/pulse/native"
+qemu_audio_env=" \
+QEMU_AUDIO_DRV=pa \
+QEMU_PA_SERVER=/run/user/$(id -u)/pulse/native \
+QEMU_AUDIO_DAC_FIXED_FREQ=48000 \
+QEMU_AUDIO_DAC_TRY_POLL=0 \
+QEMU_AUDIO_ADC_FIXED_FREQ=48000 \
+QEMU_AUDIO_ADC_TRY_POLL=48000 \
+QEMU_AUDIO_TIMER_PERIOD=1000 \
+"
 
 echo Refresh sudo timeout to avoid a race condition.
 sudo -v
@@ -92,12 +100,12 @@ echo Allocating 16G worth of huge pages
 # QEMU stuff
 sudo $qemu_audio_env qemu-system-x86_64 -monitor stdio -vnc :1 -vga none \
 -machine type=q35,accel=kvm,kernel_irqchip=on \
--drive if=pflash,format=raw,file=/usr/share/edk2-ovmf/OVMF.fd \
+-drive if=pflash,format=raw,file=/usr/share/edk2-ovmf/OVMF_CODE.fd \
 -enable-kvm -rtc base=localtime -usb -soundhw hda \
 -smbios type=0,vendor="American Megatrends Inc.",version=0403,date=04/07/2015,release=4.6,uefi=on \
 -smbios type=1,manufacturer=ASUS,product="All Series",version="System Version",serial="System Serial Number" \
 -smbios type=2,manufacturer="ASUSTeK COMPUTER INC.",product="Z97-E/USB 3.1",version="Rev X.0x",serial=150544144600157,asset=fortytwo,location=fortytwo \
--cpu host,kvm=off,hv_relaxed,hv_spinlocks=0x1fff,hv_vapic,hv_time,hv_vendor_id=424242424242 -smp sockets=1,cores=3,threads=2 \
+-cpu host,kvm=off,hv_relaxed,hv_spinlocks=0x1fff,hv_vapic,hv_time,hv_vendor_id=424242424242 -smp sockets=1,cores=7,threads=1 \
 -device vfio-pci,host=$VGA_DEVICE,x-vga=on,multifunction=off,rombar=1,romfile=./gpu.rom \
 -m 24G \
 -device usb-host,hostbus=3,hostport=3 \

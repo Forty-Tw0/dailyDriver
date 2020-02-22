@@ -16,6 +16,7 @@ emerge sys-fs/ncdu
 emerge sys-apps/usbutils
 emerge sys-process/lsof
 emerge sys-process/htop
+echo "net-analyzer/nmap zenmap" >> /etc/portage/package.use/overrides
 emerge net-analyzer/nmap
 emerge net-analyzer/tcpdump
 emerge net-analyzer/wireshark
@@ -81,23 +82,6 @@ echo "about:config browser.tabs.remote.autostart=false" # This is required to st
 # fix audio in firejail, not ideal
 sed -i 's/seccomp/#seccomp/g' /etc/firejail/firefox.profile
 # make links (like in slack) open with firefox
-
-# Steam
-wget -P /etc/portage/repos.conf/ https://raw.githubusercontent.com/anyc/steam-overlay/master/steam-overlay.conf
-emaint sync --repo steam-overlay
-emerge --ask games-util/steam-launcher
-
-# QEMU
-# https://www.reddit.com/r/VFIO/comments/74vokw/improved_pulse_audio_driver_for_qemu/
-# https://github.com/spheenik/qemu
-cp fs/blacklist.conf /etc/modprobe.d/blacklist.conf
-mkdir -p /etc/portage/patches/app-emulation/qemu
-cp fs/qemu_audio.patch /etc/portage/patches/app-emulation/qemu
-echo "app-emulation/qemu usb pulseaudio" >> /etc/portage/package.use/overrides
-emerge app-emulation/qemu
-emerge sys-firmware/edk2-ovmf
-emerge sys-apps/usermode-utilities
-
 #follow up actions
 echo "cp fs/user.js to your firefox profile"
 echo "Install firefox extensions:"
@@ -111,3 +95,10 @@ echo "Google Redirects Fixer & Tracking Remover"
 echo "CanvasBlocker"
 echo "uMatrix"
 echo "Greasemonkey"
+
+# QEMU
+cp fs/blacklist.conf /etc/modprobe.d/blacklist.conf
+echo "app-emulation/qemu usb pulseaudio" >> /etc/portage/package.use/overrides
+emerge app-emulation/qemu
+emerge sys-firmware/edk2-ovmf
+emerge sys-apps/usermode-utilities

@@ -7,6 +7,7 @@ exit
 # Gentoo tools
 emerge app-portage/eix
 emerge app-portage/gentoolkit
+emerge app-portage/portpeek
 emerge app-admin/sudo
 
 # X
@@ -58,6 +59,7 @@ chattr +i /etc/resolv.conf
 sed -i 's/127.0.0.1:53/127.0.0.1:5353/g' /etc/dnscrypt-proxy/dnscrypt-proxy.toml
 sed -i 's/\[::1\]:53/\[::1\]:5353/g' /etc/dnscrypt-proxy/dnscrypt-proxy.toml
 sed -i 's/9.9.9.9/1.1.1.1/g' /etc/dnscrypt-proxy/dnscrypt-proxy.toml
+printf "  [static.'cloudflare']\n  stamp = 'sdns://AgcAAAAAAAAABzEuMC4wLjGgENk8mGSlIfMGXMOlIlCcKvq7AVgcrZxtjon911-ep0cg63Ul-I8NlFj4GplQGb_TTLiczclX57DvMV8Q-JdjgRgSZG5zLmNsb3VkZmxhcmUuY29tCi9kbnMtcXVlcnk'" >> /etc/dnscrypt-proxy/dnscrypt-proxy.toml
 sed -i 's/command="\/usr\/bin\/dnscrypt-proxy/command="firejail \/usr\/bin\/dnscrypt-proxy/g' /etc/init.d/dnscrypt-proxy
 sed -i 's/command_user=/#command_user=/g' /etc/init.d/dnscrypt-proxy
 rc-update add dnscrypt-proxy default
