@@ -105,7 +105,7 @@ sudo $qemu_audio_env qemu-system-x86_64 -monitor stdio -vnc :1 -vga none \
 -smbios type=0,vendor="American Megatrends Inc.",version=0403,date=04/07/2015,release=4.6,uefi=on \
 -smbios type=1,manufacturer=ASUS,product="All Series",version="System Version",serial="System Serial Number" \
 -smbios type=2,manufacturer="ASUSTeK COMPUTER INC.",product="Z97-E/USB 3.1",version="Rev X.0x",serial=150544144600157,asset=fortytwo,location=fortytwo \
--cpu host,kvm=off,hv_relaxed,hv_spinlocks=0x1fff,hv_vapic,hv_time,hv_vendor_id=424242424242 -smp sockets=1,cores=7,threads=1 \
+-cpu host,kvm=off,hypervisor=false,hv_relaxed,hv_spinlocks=0x1fff,hv_vapic,hv_time,hv_vendor_id=424242424242 -smp sockets=1,cores=7,threads=1 \
 -device vfio-pci,host=$VGA_DEVICE,x-vga=on,multifunction=off,rombar=1,romfile=./gpu.rom \
 -m 24G \
 -device usb-host,hostbus=3,hostport=3 \
