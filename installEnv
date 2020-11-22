@@ -12,6 +12,10 @@ emerge app-admin/sudo
 
 # X
 euse -E X
+emerge sys-auth/elogind
+# consolekit must be started for pulseaudio to work
+rc-update add dbus default
+rc-update add elogind boot
 emerge x11-base/xorg-server
 cp fs/xorg.conf /etc/X11/xorg.conf.d/xorg.conf
 emerge x11-misc/numlockx
@@ -84,7 +88,6 @@ rc-update add cups-browsed default
 # http://localhost:631/
 #emerge x11-misc/x11vnc
 #sshd
-emerge sys-auth/consolekit
 rc-update add consolekit default
 emerge media-sound/pulseaudio
 sed -i 's/^load-module module-native-protocol-unix$/load-module module-native-protocol-unix auth-anonymous=1/g' /etc/pulse/default.pa

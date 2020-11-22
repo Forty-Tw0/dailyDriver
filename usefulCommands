@@ -6,27 +6,28 @@ exit
 # https://wiki.gentoo.org/wiki/Gentoo_Cheat_Sheet
 
 # https://wiki.gentoo.org/wiki/Security_Handbook/Staying_up-to-date
-emaint -a sync
-glsa-check -t all
-glsa-check -p $(glsa-check -t all)
-# glsa-check -f $(glsa-check -t all)
-
-# update
-emaint -a sync
-ACCEPT_LICENSE="" emerge --ask --update --verbose-conflicts --autounmask-write --changed-use --deep --keep-going --with-bdeps=y @world
+sudo emaint -a sync
+#sudo glsa-check -p $(glsa-check -t all)
+#sudo glsa-check -f $(glsa-check -t all)
+#unfirejail bzip2 by deleting symlink
+# /usr/local/bin/patch too
+sudo PATH=$(echo $PATH | sed 's/\/usr\/local\/bin//g') ACCEPT_LICENSE="*" emerge --ask --update --verbose-conflicts --autounmask-write --changed-use --deep --keep-going --with-bdeps=y --exclude="" @world
 # I think I had tons of conflicts with autounmask-write last time...
 # dont forget to merge /etc also dont forget that it will overwrite your config instead of actually automerging...
 
 # fix
-revdep-rebuild -v portage_options='--ask'
-perl-cleaner --all
+sudo revdep-rebuild -v portage_options='--ask'
+sudo ACCEPT_LICENSE="*" perl-cleaner --all
 
 # clean
-emerge --ask --depclean -v
-portpeek -a #-f
+sudo emerge --ask --depclean -v
+sudo portpeek -a #-f
 
-exit
 ############################################
+exit
+
+# world file - contains manually installed packages
+# /var/lib/portage/world
 
 # check enabled USE flags
 portageq envvar USE | xargs -n 1
@@ -35,6 +36,12 @@ portageq envvar USE | xargs -n 1
 euse -I <flag>
 quse <flag>
 eix --installed-with-use <flag>
+
+# show merge history
+qlop -m  -v
+
+# merge specific version
+emerge ~<package-name>-version
 
 # list all files owned by a package
 qlist <package-name>

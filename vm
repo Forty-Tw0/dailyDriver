@@ -1,8 +1,46 @@
 #!/bin/bash
 
+# looking-glass.io - Sharing Keyboard, Monitor, and Mouse via shared memory between host and guest?
+# https://wiki.installgentoo.com/index.php/PCI_passthrough#CPU_affinity_pinning
+# https://wiki.archlinux.org/index.php/PCI_passthrough_via_OVMF#Further_tuning
+# https://wiki.archlinux.org/index.php/PCI_passthrough_via_OVMF#Passing_VM_audio_to_host_via_PulseAudio
+
+# ------------------------------------------------------- Kernel Config
+
+# outdated? https://wiki.installgentoo.com/index.php/PCI_passthrough#Step_0:_Compile_IOMMU_support_if_you_use_Gento
 # Recompile kernel with these flags: https://wiki.installgentoo.com/index.php/PCI_passthrough
-#  and CONFIG_IP_NF_NAT+CONFIG_IP_NF_TARGET_MASQUERADE
+
+# Device Drivers --->
+#  <M> VFIO Non-Privileged userspace driver framework  ---
+#  [*]   VFIO No-IOMMU support  ----
+#  <M>   VFIO support for PCI devices
+#  [*]     VFIO PCI support for VGA devices
+#  [*]     VFIO PCI extensions for Intel graphics (GVT-d)
+#  <M>   Mediated device driver framework
+#  <M>     VFIO driver for Mediated devices
+
+#  [*] IOMMU Hardware Support --->
+#        Generic IOMMU Pagetable Support  ----
+#  [ ]   Export IOMMU internals in DebugFS
+#  [ ]   IOMMU passthrough by default
+#  [*]   AMD IOMMU support
+#  <*>     AMD IOMMU Version 2 driver
+#  [*]   Support for Intel IOMMU using DMA Remapping Devices
+#  [*]     Support for Shared Virtual Memory with Intel IOMMU
+#  [*]     Enable Intel DMA Remapping Devices by default
+#  [*]   Support for Interrupt Remapping
+
+# > Networking support > Networking options > Network packet filtering framework (Netfilter) > IP: Netfilter Configuration
+#  <M>   iptables NAT support
+#  <M>     MASQUERADE target support
+
 # boot kernel with: video=efifb:off,vesafb:off iommu=on intel_iommu=on amd_iommu=on pcie_acs_override=downstream
+
+# ------------------------------------------------------- End Kernel Config
+
+# For windows network and storage drivers, load virtio into the cdrom
+
+# Some GPUs might want their ROM to be passed in, I think Nvidea drivers do some checks for this. Maybe it isn't needed if the hypervisor is undetected.
 # Dump ROM for passthorugh, you might need to put your GPU in PCIeslot2 and have another GPU in slot1 while booted into a live CD for this to work!
 #echo 1 > /sys/bus/pci/devices/$VGA_DEVICE/rom
 #cat /sys/bus/pci/devices/$VGA_DEVICE/rom > /tmp/gpu.rom
@@ -26,6 +64,9 @@ QEMU_AUDIO_TIMER_PERIOD=1000 \
 
 echo Refresh sudo timeout to avoid a race condition.
 sudo -v
+
+# Load VFIO-PCI driver so that /dev/vfio-pci is present
+sudo modprobe vfio-pci
 
 # Unbinds a device and loads the driver specified.
 changeDriver() {
@@ -80,7 +121,7 @@ echo Unbinding GPU
 changeDriver $VGA_DEVICE vfio-pci
 changeDriver $HDMI_AUDIO_DEVICE vfio-pci
 
-# network stuff
+### Networking
 sudo modprobe vhost_net
 sudo modprobe tun
 sudo tunctl -t vmtap10
@@ -92,43 +133,55 @@ sudo iptables -t nat -A POSTROUTING -o eno1 -j MASQUERADE
 sudo iptables -A FORWARD -i vmtap10 -j ACCEPT
 sudo iptables -A FORWARD -o vmtap10 -m state --state RELATED,ESTABLISHED -j ACCEPT
 
-# set hugepages size to 1G at boot
-echo Allocating 16G worth of huge pages
-#echo 16 | sudo tee /sys/kernel/mm/hugepages/hugepages-1048576kB/nr_hugepages > /dev/null
-#echo 16384 | sudo tee /proc/sys/vm/nr_hugepages > /dev/null
+### Memory Allocation
+RAM=24 # in gigabytes
+#echo Mounting and dynamically allocating ${RAM}G of huge pages
+# Try to drop and compact memory for contiguous blocks
+#echo 3 | sudo tee /proc/sys/vm/drop_caches
+#echo 1 | sudo tee /proc/sys/vm/compact_memory
+#sudo mkdir -p /dev/hugepages
+#sudo mountpoint -q /dev/hugepages && sudo mount -t hugetlbfs hugetlbfs /hugepages
+# 1G pages are hard to get, so lets just use the standard 2M since they are better than the normal 4K pages
+#sudo sysctl vm.nr_hugepages=$(($RAM/2*1024)) # number of 2M pages
 
-# QEMU stuff
+### QEMU
 sudo $qemu_audio_env qemu-system-x86_64 -monitor stdio -vnc :1 -vga none \
 -machine type=q35,accel=kvm,kernel_irqchip=on \
 -drive if=pflash,format=raw,file=/usr/share/edk2-ovmf/OVMF_CODE.fd \
--enable-kvm -rtc base=localtime -usb -soundhw hda \
--smbios type=0,vendor="American Megatrends Inc.",version=0403,date=04/07/2015,release=4.6,uefi=on \
--smbios type=1,manufacturer=ASUS,product="All Series",version="System Version",serial="System Serial Number" \
--smbios type=2,manufacturer="ASUSTeK COMPUTER INC.",product="Z97-E/USB 3.1",version="Rev X.0x",serial=150544144600157,asset=fortytwo,location=fortytwo \
--cpu host,kvm=off,hypervisor=false,hv_relaxed,hv_spinlocks=0x1fff,hv_vapic,hv_time,hv_vendor_id=424242424242 -smp sockets=1,cores=7,threads=1 \
+-enable-kvm -rtc base=localtime -usb -device intel-hda -device hda-duplex \
+-cpu host,kvm=off,hypervisor=false -smp sockets=1,cores=7,threads=1 \
 -device vfio-pci,host=$VGA_DEVICE,x-vga=on,multifunction=off,rombar=1,romfile=./gpu.rom \
--m 24G \
+-m ${RAM}G \
+-serial tcp::4545,server,nowait \
 -device usb-host,hostbus=3,hostport=3 \
 -device usb-host,hostbus=3,hostport=4 \
--device usb-host,vendorid=1133,productid=49685 \
+-device usb-host,vendorid=0x046d,productid=0xc215 \
+-device usb-host,vendorid=0x045e,productid=0x028e \
 -drive file=/dev/disk/by-partuuid/385c0f02-3e9e-4c44-8613-92c40e35582a,format=raw,cache=none \
 -netdev tap,id=tap0,ifname=vmtap10,script=no,downscript=no,vhost=on -device virtio-net-pci,netdev=tap0,mac=42:42:42:42:42:42 \
--netdev user,id=samba,smb=/samba -device virtio-net-pci,netdev=samba \
-#-drive file=/dev/sda4,format=raw,cache=none \
-
+-netdev user,id=samba,smb=/samba -device virtio-net-pci,netdev=samba
+#-device usb-host,vendorid=1133,productid=49685 \
 #-mem-path /dev/hugepages \
 
+# past CPU configs, may increase or decrease hypervisor detection? Didn't help much in the end, revist later
+#-cpu host,kvm=off,hypervisor=false,hv_relaxed,hv_spinlocks=0x1fff,hv_vapic,hv_time,hv_vendor_id=424242424242 -smp sockets=1,cores=7,threads=1 \
+#-cpu host,+invtsc,kvm=off,hypervisor=false,hv_relaxed,hv_spinlocks=0x1fff,hv_vapic,hv_time,hv_vendor_id=424242424242,hv_vpindex,hv_synic,hv_stimer,hv_reset,hv_runtime -smp sockets=1,cores=7,threads=1 \
+
+# HardwareID spoofing for ban and tracking evasion
 # strace -F -e open dmidecode
-# https://wiki.installgentoo.com/index.php/PCI_passthrough#CPU_affinity_pinning
-# https://wiki.archlinux.org/index.php/PCI_passthrough_via_OVMF#Further_tuning
-# https://wiki.archlinux.org/index.php/PCI_passthrough_via_OVMF#Passing_VM_audio_to_host_via_PulseAudio
+#-smbios type=0,vendor="American Megatrends Inc.",version=0403,date=04/07/2015,release=4.6,uefi=on \
+#-smbios type=1,manufacturer=ASUS,product="All Series",version="System Version",serial="System Serial Number" \
+#-smbios type=2,manufacturer="ASUSTeK COMPUTER INC.",product="Z97-E/USB 3.1",version="Rev X.0x",serial=4242424242424242,asset=fortytwo,location=fortytwo \
+
+###########
+# Cleanup #
+###########
 
 echo Refresh sudo timeout to avoid a race condition.
 sudo -v
 
-echo Freeing huge pages
-echo 0 | sudo tee /sys/kernel/mm/hugepages/hugepages-1048576kB/nr_hugepages > /dev/null
-#echo 0 | sudo tee /proc/sys/vm/nr_hugepages > /dev/null
+#echo Freeing huge pages
+#sudo sysctl vm.nr_hugepages=0
 
 echo Cleaning up network
 sudo iptables -F
@@ -140,5 +193,7 @@ echo Rebinding GPU
 changeDriver $VGA_DEVICE $VGA_DRIVER
 changeDriver $HDMI_AUDIO_DEVICE $AUDIO_DRIVER
 
-# enable monitors in X
+# re-enable monitors in X
 xrandr $savedXconfig
+
+echo Done

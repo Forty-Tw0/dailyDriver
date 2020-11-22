@@ -12,8 +12,8 @@ set $mod Mod4
 bindsym XF86AudioRaiseVolume exec pactl set-sink-volume @DEFAULT_SINK@ +2% && pactl set-sink-mute @DEFAULT_SINK@ 0
 bindsym XF86AudioLowerVolume exec pactl set-sink-volume @DEFAULT_SINK@ -2% && pactl set-sink-mute @DEFAULT_SINK@ 0
 bindsym XF86AudioMute exec pactl set-sink-mute @DEFAULT_SINK@ toggle
-bindsym       Print exec --no-startup-id gnome-screenshot -f ~/screenshots/$(date).png
-bindsym Shift+Print exec --no-startup-id gnome-screenshot --area -f ~/screenshots/$(date).png
+bindsym       Print exec --no-startup-id gnome-screenshot -f ~/screenshots/$(date +%s).png
+bindsym Shift+Print exec --no-startup-id gnome-screenshot --area -f ~/screenshots/$(date +%s).png
 
 bindsym $mod+F5 exec xrandr --listmonitors | awk '{print $4}' | xargs -i xrandr --output {} --brightness 0.2
 bindsym $mod+F6 exec xrandr --listmonitors | awk '{print $4}' | xargs -i xrandr --output {} --brightness 0.42

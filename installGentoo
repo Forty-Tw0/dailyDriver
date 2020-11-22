@@ -81,15 +81,20 @@ mkdir etc/portage/patches
 # ACS path to separate IOMMU groups
 cp -r tmp/gentoo_ACS_override_patch-master/sys-kernel etc/portage/patches/sys-kernel
 emerge sys-kernel/gentoo-sources
-emerge sys-apps/pciutls
 emerge sys-kernel/genkernel --autounmask-write
 echo "option -3 for zz-autounmask"
 etc-update
 emerge sys-kernel/genkernel
-printf "UUID=$(lsblk -o name,uuid | grep sd[a-z]2 | awk '{print $2}') /boot vfat defaults 0 2\nUUID=$(lsblk -o name,uuid | grep sd[a-z]3 | awk '{print $2}') none swap sw 0 0\nUUID=$(lsblk -o name,uuid | grep sd[a-z]4 | awk '{print $2}') / ext4 noatime 0 1\n/dev/cdrom /mnt/cdrom auto noauto,user" >> /etc/fstab
-# https://wiki.installgentoo.com/index.php/PCI_passthrough#Step_0:_Compile_IOMMU_support_if_you_use_Gentoo
-sed -i 's/#GRUB_CMDLINE_LINUX=""/GRUB_CMDLINE_LINUX="iommu=on intel_iommu=on"/g' /etc/default/grub
+sed -i 's/#GRUB_CMDLINE_LINUX=""/GRUB_CMDLINE_LINUX="video=efifb:off,vesafb:off iommu=on intel_iommu=on amd_iommu=on pcie_acs_override=downstream"/g' /etc/default/grub
 genkernel --menuconfig all
+# genkernel always uses a fresh config, so you have to reconfigure manually or Load the old one.
+
+# auto-mmount USB
+printf "UUID=$(lsblk -o name,uuid | grep sd[a-z]2 | awk '{print $2}') /boot vfat defaults 0 2\nUUID=$(lsblk -o name,uuid | grep sd[a-z]3 | awk '{print $2}') none swap sw 0 0\nUUID=$(lsblk -o name,uuid | grep sd[a-z]4 | awk '{print $2}') / ext4 noatime 0 1\n/dev/cdrom /mnt/cdrom auto noauto,user" >> /etc/fstab
+
+# I had problems with really slow /dev/random init at boot and blocking at runtime
+emerge sys-apps/rng-tools
+rc-update add rngd boot
 
 # networking
 emerge --noreplace net-misc/netifrc

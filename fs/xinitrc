@@ -2,12 +2,16 @@ numlockx on
 # make slave GPUs obey the master GPU
 xrandr --setprovideroutputsource 1 0
 # Setup my preferred display layout
-xrandr --output HDMI2 --mode 3440x1440 --pos 1920x0 --rotate normal --output HDMI1 --primary --mode 1920x1080 --pos 0x360 --rotate normal --output VIRTUAL1 --off --output VGA1 --mode 1280x1024 --pos 5360x200 --rotate normal
+#xrandr --output HDMI2 --mode 3440x1440 --pos 1920x0 --rotate normal --output HDMI1 --primary --mode 1920x1080 --pos 0x360 --rotate normal --output VIRTUAL1 --off --output VGA1 --mode 1280x1024 --pos 5360x200 --rotate normal
+xrandr --output HDMI1 --primary --mode 1920x1080 --pos 0x0 --rotate normal --output HDMI2 --off --output VGA1 --mode 1280x1024 --pos 1920x56 --rotate normal --output VIRTUAL1 --off
 # init brightness
 xrandr --listmonitors | awk '{print $4}' | xargs -i xrandr --output {} --brightness 0.84
 
 # prep compton and the wallpaper, then start i3
 compton -b -f -D 1 -I 0.01 -O 0.01 --active-opacity 1 -i 1 -m 0.84 -e 0.84 --inactive-dim 0 --vsync drm --vsync-aggressive --sw-opti --dbe --paint-on-overlay --glx-no-stencil --glx-use-copysubbuffermesa --glx-no-rebind-pixmap --glx-use-gpushader --opacity-rule 63:'class_g*="URxvt"'
 feh --bg-fill /etc/i3/wallpaper
-# launch window manager with consolekit session for pulse audio
-exec ck-launch-session dbus-launch --sh-syntax --exit-with-session i3
+
+thunderbird &
+slack &
+discord &
+exec dbus-launch --sh-syntax --exit-with-session i3
