@@ -51,17 +51,6 @@ VGA_DRIVER=nouveau
 VGA_DEVICE=0000:01:00.0
 HDMI_AUDIO_DEVICE=0000:01:00.1
 
-# get your uid so we can find your pulse socket
-qemu_audio_env=" \
-QEMU_AUDIO_DRV=pa \
-QEMU_PA_SERVER=/run/user/$(id -u)/pulse/native \
-QEMU_AUDIO_DAC_FIXED_FREQ=48000 \
-QEMU_AUDIO_DAC_TRY_POLL=0 \
-QEMU_AUDIO_ADC_FIXED_FREQ=48000 \
-QEMU_AUDIO_ADC_TRY_POLL=48000 \
-QEMU_AUDIO_TIMER_PERIOD=1000 \
-"
-
 echo Refresh sudo timeout to avoid a race condition.
 sudo -v
 
@@ -125,7 +114,7 @@ changeDriver $HDMI_AUDIO_DEVICE vfio-pci
 sudo modprobe vhost_net
 sudo modprobe tun
 sudo tunctl -t vmtap10
-sudo ip link set dev vmtap10 address 42:42:42:42:42:10
+sudo ip link set dev vmtap10 address 42:42:42:42:42:42
 sudo ifconfig vmtap10 192.168.42.1 up
 echo 1 | sudo tee /proc/sys/net/ipv4/ip_forward > /dev/null
 sudo iptables -t nat -A POSTROUTING -o eno1 -j MASQUERADE
@@ -143,35 +132,45 @@ RAM=24 # in gigabytes
 #sudo mountpoint -q /dev/hugepages && sudo mount -t hugetlbfs hugetlbfs /hugepages
 # 1G pages are hard to get, so lets just use the standard 2M since they are better than the normal 4K pages
 #sudo sysctl vm.nr_hugepages=$(($RAM/2*1024)) # number of 2M pages
+# Huge pages are hard to allocate when RAM is fragmented
+#-mem-path /dev/hugepages \
 
 ### QEMU
-sudo $qemu_audio_env qemu-system-x86_64 -monitor stdio -vnc :1 -vga none \
--machine type=q35,accel=kvm,kernel_irqchip=on \
+sudo qemu-system-x86_64 -monitor stdio -vnc :1 -vga none -usb \
+-machine type=q35,accel=kvm,kernel_irqchip=on -enable-kvm \
+-rtc base=localtime -no-hpet \
 -drive if=pflash,format=raw,file=/usr/share/edk2-ovmf/OVMF_CODE.fd \
--enable-kvm -rtc base=localtime -usb -device intel-hda -device hda-duplex \
--cpu host,kvm=off,hypervisor=false -smp sockets=1,cores=7,threads=1 \
+-smbios type=0,vendor=$RANDOM,version=$RANDOM,date=$RANDOM,release=$RANDOM.$RANDOM,uefi=on \
+-smbios type=1,manufacturer=$RANDOM,product=$RANDOM,version=$RANDOM,serial=$RANDOM,uuid=$(uuidgen),sku=$RANDOM,family=$RANDOM \
+-smbios type=2,manufacturer=$RANDOM,product=$RANDOM,version=$RANDOM,serial=$RANDOM,asset=$RANDOM,location=$RANDOM \
+-smbios type=3,manufacturer=$RANDOM,version=$RANDOM,serial=$RANDOM,asset=$RANDOM,sku=$RANDOM \
+-smbios type=4,manufacturer=$RANDOM,sock_pfx=$RANDOM,version=$RANDOM,serial=$RANDOM,asset=$RANDOM,part=$RANDOM \
+-smbios type=11,value=$RANDOM,value=$RANDOM,value=$RANDOM,value=$RANDOM \
+-smbios type=17,manufacturer=$RANDOM,serial=$RANDOM,asset=$RANDOM,loc_pfx=$RANDOM,bank=$RANDOM,part=$RANDOM,speed=$RANDOM \
+-cpu host,kvm=off,hypervisor=false,-hypervisor,hv-relaxed,hv-vapic,hv_spinlocks=0x1fff,hv-vpindex,hv-runtime,hv-time,hv-synic,hv-stimer,hv-tlbflush,hv-ipi,hv_vendor_id=$RANDOM \
+-smp sockets=1,cores=7,threads=1 -m ${RAM}G \
+-device intel-hda -device hda-micro,audiodev=hda \
+-audiodev pa,id=hda,server=unix:/run/user/$(id -u)/pulse/native,timer-period=1000,in.frequency=48000,out.frequency=48000 \
 -device vfio-pci,host=$VGA_DEVICE,x-vga=on,multifunction=off,rombar=1,romfile=./gpu.rom \
--m ${RAM}G \
--serial tcp::4545,server,nowait \
 -device usb-host,hostbus=3,hostport=3 \
 -device usb-host,hostbus=3,hostport=4 \
 -device usb-host,vendorid=0x046d,productid=0xc215 \
 -device usb-host,vendorid=0x045e,productid=0x028e \
 -drive file=/dev/disk/by-partuuid/385c0f02-3e9e-4c44-8613-92c40e35582a,format=raw,cache=none \
--netdev tap,id=tap0,ifname=vmtap10,script=no,downscript=no,vhost=on -device virtio-net-pci,netdev=tap0,mac=42:42:42:42:42:42 \
+-serial tcp::4545,server,nowait \
+-netdev tap,id=tap0,ifname=vmtap10,script=no,downscript=no,vhost=on \
+-device virtio-net-pci,netdev=tap0,mac=$(openssl rand -hex 6 | sed 's/\(..\)/\1:/g; s/:$//') \
 -netdev user,id=samba,smb=/samba -device virtio-net-pci,netdev=samba
 #-device usb-host,vendorid=1133,productid=49685 \
-#-mem-path /dev/hugepages \
 
-# past CPU configs, may increase or decrease hypervisor detection? Didn't help much in the end, revist later
-#-cpu host,kvm=off,hypervisor=false,hv_relaxed,hv_spinlocks=0x1fff,hv_vapic,hv_time,hv_vendor_id=424242424242 -smp sockets=1,cores=7,threads=1 \
-#-cpu host,+invtsc,kvm=off,hypervisor=false,hv_relaxed,hv_spinlocks=0x1fff,hv_vapic,hv_time,hv_vendor_id=424242424242,hv_vpindex,hv_synic,hv_stimer,hv_reset,hv_runtime -smp sockets=1,cores=7,threads=1 \
+#-device usb-audio,audiodev=usb,multi=on \
+#-audiodev pa,id=usb,server=unix:/run/user/$(id -u)/pulse/native,out.mixing-engine=off,out.buffer-length=512,timer-period=1000 \
+
+# hyper-v enlightenments make things faster, hypervisor=off (-hypervisor) should still hide hyperv
+# https://github.com/qemu/qemu/blob/master/docs/hyperv.txt
 
 # HardwareID spoofing for ban and tracking evasion
 # strace -F -e open dmidecode
-#-smbios type=0,vendor="American Megatrends Inc.",version=0403,date=04/07/2015,release=4.6,uefi=on \
-#-smbios type=1,manufacturer=ASUS,product="All Series",version="System Version",serial="System Serial Number" \
-#-smbios type=2,manufacturer="ASUSTeK COMPUTER INC.",product="Z97-E/USB 3.1",version="Rev X.0x",serial=4242424242424242,asset=fortytwo,location=fortytwo \
 
 ###########
 # Cleanup #

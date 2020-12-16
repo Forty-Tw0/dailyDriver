@@ -22,6 +22,9 @@ sudo ACCEPT_LICENSE="*" perl-cleaner --all
 # clean
 sudo emerge --ask --depclean -v
 sudo portpeek -a #-f
+#sudo eclean --deep distfiles
+# just delete all source files
+sudo rm -rf /usr/portage/distfiles
 
 ############################################
 exit
