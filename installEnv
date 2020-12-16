@@ -9,6 +9,7 @@ emerge app-portage/eix
 emerge app-portage/gentoolkit
 emerge app-portage/portpeek
 emerge app-admin/sudo
+sed -i 's/replace-wscomments=no/replace-wscomments=yes/g' /etc/dispatch-conf.conf
 
 # X
 euse -E X

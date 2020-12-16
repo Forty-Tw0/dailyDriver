@@ -6,7 +6,7 @@ exit
 # https://wiki.gentoo.org/wiki/Gentoo_Cheat_Sheet
 
 # https://wiki.gentoo.org/wiki/Security_Handbook/Staying_up-to-date
-sudo emaint -a sync
+sudo emaint -a sync && eix-update
 #sudo glsa-check -p $(glsa-check -t all)
 #sudo glsa-check -f $(glsa-check -t all)
 #unfirejail bzip2 by deleting symlink
@@ -14,6 +14,8 @@ sudo emaint -a sync
 sudo PATH=$(echo $PATH | sed 's/\/usr\/local\/bin//g') ACCEPT_LICENSE="*" emerge --ask --update --verbose-conflicts --autounmask-write --changed-use --deep --keep-going --with-bdeps=y --exclude="" @world
 # I think I had tons of conflicts with autounmask-write last time...
 # dont forget to merge /etc also dont forget that it will overwrite your config instead of actually automerging...
+# use dispatch-conf instead of etc-update
+sudo dispatch-conf
 
 # fix
 sudo revdep-rebuild -v portage_options='--ask'
