@@ -1,8 +1,7 @@
 #!/bin/bash
 
 # looking-glass.io - Sharing Keyboard, Monitor, and Mouse via shared memory between host and guest?
-# https://wiki.installgentoo.com/index.php/PCI_passthrough#CPU_affinity_pinning
-# https://wiki.archlinux.org/index.php/PCI_passthrough_via_OVMF#Further_tuning
+# https://wiki.archlinux.org/index.php/PCI_passthrough_via_OVMF
 
 # hyper-v enlightenments make things faster for Window guests. hypervisor=off (-hypervisor) should still hide hyperv
 # https://github.com/qemu/qemu/blob/master/docs/hyperv.txt
@@ -134,20 +133,27 @@ RAM=24 # in gigabytes
 # Huge pages are hard to allocate when RAM is fragmented
 #-mem-path /dev/hugepages \
 
-### CPU Thread Affinity Pinning
-thread_count=7 # number of thread to give the VM, treat this as CPU cores with 1 thread each
-# watch "ps -Leo tid,comm,sigmask,%cpu,pri,sched,rtprio,psr,sgi_p | grep qemu"
-# We can identify the important VM threads by using the sigmask of fffffffe7ffbf837
-# Spawn a background bash script to wait until VM threads have been created by Qemu and then pin them
+### CPU Affinity and Thread Priority
+thread_count=7 # number of threads to give the VM, treat this as CPU cores with 1 thread each
+# Spawn a background bash script to wait until VM threads have been created by Qemu
 {
+  # We can identify the important VM threads by using the sigmask of fffffffe7ffbf837 (is this reliable?)
   while [ $(ps -Leo sigmask,comm | grep "fffffffe7ffbf837 qemu" | wc -l) -lt $thread_count ]; do
     sleep 0.5
   done
   tnum=0
   for pid in `ps -Leo tid,sigmask,comm | grep "fffffffe7ffbf837 qemu" | awk '{print $1}'`; do
+    # TODO: Make this topology aware (NUMA nodes) Intel hyperthreading and AMD SMT do this differently
     sudo taskset -pc $((tnum++)) $pid
+    # Linux has priorities of 0-99 reserved for realtime scheduling and 100-139 for normal threads
+    # Set the niceness to the max of -20 so that they have the highest priority of 0 (which 100 in userspace)
+    sudo renice -n -20 -p $pid
+    # We could give these threads the highest realtime priority with FIFO or RR, but that AGGRESSIVELY preempts the host
+    # --fifo will wait until the thread releases control (if ever!), the thread will preempt others whenever it wants
+    # --rr preempts like FIFO but the thread are required to yield after their time slice ends
+    #sudo chrt --rr -p 99 $pid
   done
-  echo Pinned VM Thread Affinity
+  echo VM threads pinned to CPU cores and prioritised
 } &
 
 ### QEMU
