@@ -137,10 +137,35 @@ RAM=24 # in gigabytes
 thread_count=7 # number of threads to give the VM, treat this as CPU cores with 1 thread each
 # Spawn a background bash script to wait until VM threads have been created by Qemu
 {
-  # We can identify the important VM threads by using the sigmask of fffffffe7ffbf837 (is this reliable?)
+  ### Notes on blocked sigmasks for Qemu threads
+  # 0000000010002240 main thread
+  #   These signals are blocked in qemu/util/main-loop.c qemu_signal_init()
+  #   7=SIGBUS
+  #   10=SIG_IPI==SIGUSR1 defined in qemu/include/qemu/main-loop.h
+  #   14=SIGALRM
+  #   29=SIGIO
+  # fffffffe7ffbfa77 worker threads that come and go
+  #   These signals are unblocked by qemu/util/qemu-thread-posix.c qemu_thread_create()
+  #   4=SIGILL
+  #   7=SIGBUS ----
+  #   8=SIGFPE
+  #   9=SIGKILL
+  #   10=SIG_IPI=SIGUSR1 ----
+  #   11=SIGSEGV
+  #   19=SIGSTOP
+  #   32=SIGRTMIN
+  #   33=SIGRTMIN+1
+  # fffffffe7ffbf837 actual VM threads that we care about
+  #   These 2 signals may be unblocked by qemu/accel/kvm/kvm-all.c kvm_init_cpu_signals()
+  #   SIGBUS only gets unblocked if KVM_HAVE_MCE_INJECTION is defined
+  #   SIG_IPI always gets unblocked and always exists on the main thread, this is a good indicator
+  #     also gets unblocked by qemu/target/i386/hvf/hvf.c hvf_init_vcpu() but we don't use accel=hvf
+  # In short:
+  #   We can identify the important VM threads by using the sigmask of fffffffe7ffbf837 because it has SIG_IPI/SIGUSR1
   while [ $(ps -Leo sigmask,comm | grep "fffffffe7ffbf837 qemu" | wc -l) -lt $thread_count ]; do
     sleep 0.5
   done
+  echo Identified VM threads
   tnum=0
   for pid in `ps -Leo tid,sigmask,comm | grep "fffffffe7ffbf837 qemu" | awk '{print $1}'`; do
     # TODO: Make this topology aware (NUMA nodes) Intel hyperthreading and AMD SMT do this differently
@@ -148,7 +173,7 @@ thread_count=7 # number of threads to give the VM, treat this as CPU cores with 
     # Linux has priorities of 0-99 reserved for realtime scheduling and 100-139 for normal threads
     # Set the niceness to the max of -20 so that they have the highest priority of 0 (which 100 in userspace)
     sudo renice -n -20 -p $pid
-    # We could give these threads the highest realtime priority with FIFO or RR, but that AGGRESSIVELY preempts the host
+    # We could give these threads the highest realtime priority (99 being 0 on the above scale), but that AGGRESSIVELY preempts the host
     # --fifo will wait until the thread releases control (if ever!), the thread will preempt others whenever it wants
     # --rr preempts like FIFO but the thread are required to yield after their time slice ends
     #sudo chrt --rr -p 99 $pid
