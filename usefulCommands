@@ -6,12 +6,29 @@ exit
 # https://wiki.gentoo.org/wiki/Gentoo_Cheat_Sheet
 
 # https://wiki.gentoo.org/wiki/Security_Handbook/Staying_up-to-date
-sudo emaint -a sync && eix-update
+sudo emaint -a sync && sudo eix-update
 #sudo glsa-check -p $(glsa-check -t all)
 #sudo glsa-check -f $(glsa-check -t all)
-#unfirejail bzip2 by deleting symlink
-# /usr/local/bin/patch too
-sudo PATH=$(echo $PATH | sed 's/\/usr\/local\/bin//g') ACCEPT_LICENSE="*" emerge --ask --update --verbose-conflicts --autounmask-write --changed-use --deep --keep-going --with-bdeps=y --exclude="" @world
+
+# kernel upgrade
+eselect kernel list
+sudo eselect kernel set 1
+curl -L https://github.com/feniksa/gentoo_ACS_override_patch/archive/master.zip -o /tmp/master.zip
+unzip /tmp/master.zip
+sudo cp -r /tmp/gentoo_ACS_override_patch-master/sys-kernel /etc/portage/patches/sys-kernel
+# this patch is only activated after gentoo-sources emerge
+sudo emerge -v gentoo-sources
+zcat /proc/config.gz > /tmp/current_kernel.config
+sudo genkernel --kernel-config=/tmp/current_kernel.config all
+sudo grub-mkconfig -o /boot/grub/grub.cfg
+sudo eclean-kernel --ask -n 2 # keep the new and old kernel, warning: doesn't actually care about version numbers
+
+### Firejail breaks some things with an ld.so/libsandbox.so error and something about env vars being too long
+# https://bugs.gentoo.org/694966
+# unfirejail bzip2 by deleting symlinks at /usr/local/bin/
+# bzip2, patch, fontforge not working
+
+sudo ACCEPT_LICENSE="*" emerge --ask --update --verbose-conflicts --autounmask-write --changed-use --deep --keep-going --with-bdeps=y --exclude="" @world
 # I think I had tons of conflicts with autounmask-write last time...
 # dont forget to merge /etc also dont forget that it will overwrite your config instead of actually automerging...
 # use dispatch-conf instead of etc-update
@@ -23,10 +40,14 @@ sudo ACCEPT_LICENSE="*" perl-cleaner --all
 
 # clean
 sudo emerge --ask --depclean -v
-sudo portpeek -a #-f
-#sudo eclean --deep distfiles
+eix-test-obsolete
+sudo portpeek -a
+sudo eclean --deep distfiles
+sudo eclean --deep packages
 # just delete all source files
 sudo rm -rf /usr/portage/distfiles
+# cleanup dangling temp files TODO: use a RAM tmpfs
+sudo rm -rf /var/tmp/portage
 
 ############################################
 exit

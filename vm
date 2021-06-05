@@ -33,13 +33,14 @@
 #  [*]   Support for Intel IOMMU using DMA Remapping Devices
 #  [*]     Support for Shared Virtual Memory with Intel IOMMU
 #  [*]     Enable Intel DMA Remapping Devices by default
+#  [*]     Enable Intel IOMMU scalable mode by default
 #  [*]   Support for Interrupt Remapping
 
 # > Networking support > Networking options > Network packet filtering framework (Netfilter) > IP: Netfilter Configuration
 #  <M>   iptables NAT support
 #  <M>     MASQUERADE target support
 
-# Boot kernel with: video=efifb:off,vesafb:off iommu=on intel_iommu=on amd_iommu=on pcie_acs_override=downstream
+# /etc/default/grub:21:GRUB_CMDLINE_LINUX="video=efifb:off,vesafb:off iommu=on intel_iommu=on amd_iommu=on pcie_acs_override=downstream"
 
 # ------------------------------------------------------- End Kernel Config
 

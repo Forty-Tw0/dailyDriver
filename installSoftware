@@ -17,12 +17,13 @@ emerge sys-apps/usbutils
 emerge sys-apps/pciutils
 emerge sys-process/lsof
 emerge sys-process/htop
-echo "net-analyzer/nmap zenmap" >> /etc/portage/package.use/overrides
+echo "net-analyzer/nmap ncat nping zenmap" >> /etc/portage/package.use/overrides
 emerge net-dns/bind-tools
 emerge net-analyzer/traceroute
 emerge net-analyzer/nmap
 emerge net-analyzer/tcpdump
 emerge net-analyzer/wireshark
+emerge app-admin/eclean-kernel
 emerge sys-fs/cryptsetup
 emerge sys-block/gparted
 emerge app-arch/bzip2
@@ -66,13 +67,11 @@ emerge --ask net-im/discord-bin
 emerge --ask net-im/slack
 printf "\n# Slack\nalias slack=\"(cd /opt/slack && ./slack &)\"\n" >> /home/ljosalfur/.bashrc
 
-# Use Oracle java for thinkorswim
-echo "dev-java/oracle-jre-bin javafx" >> /etc/portage/package.use/overrides
-emerge --ask dev-java/oracle-jre-bin
+emerge --ask dev-java/openjdk
 wget -O /tmp/tos.sh https://mediaserver.thinkorswim.com/installer/InstFiles/thinkorswim_installer.sh
 sh /tmp/tos.sh
-printf "\n# ThinkOrSwim\nalias thinkorswim=\"(cd ~/thinkorswim && /opt/oracle-jre-bin-1.8.0.181/bin/java -jar launcher.jar)\"\n" >> /home/ljosalfur/.bashrc
-printf "\n# RuneLite\nalias osrs=\"(cd ~/ && /opt/oracle-jre-bin-1.8.0.181/bin/java -jar RuneLite.jar)\"\n" >> /home/ljosalfur/.bashrc
+printf "\n# ThinkOrSwim\nalias thinkorswim=\"(cd ~/thinkorswim && /usr/bin/java -jar launcher.jar -Dsun.java2d.opengl=true)\"\n" >> /home/ljosalfur/.bashrc
+printf "\n# RuneLite\nalias osrs=\"(cd ~/ && /usr/bin/java -jar RuneLite.jar)\"\n" >> /home/ljosalfur/.bashrc
 
 # firefox in a sandbox
 echo "www-client/firefox pulseaudio" >> /etc/portage/package.use/overrides

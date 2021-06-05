@@ -75,7 +75,7 @@ source /etc/profile
 export PS1="(chroot) $PS1"
 
 # kernel config
-curl https://github.com/feniksa/gentoo_ACS_override_patch/archive/master.zip -o tmp/master.zip
+curl -L https://github.com/feniksa/gentoo_ACS_override_patch/archive/master.zip -o tmp/master.zip
 unzip tmp/master.zip -d tmp
 mkdir etc/portage/patches
 # ACS path to separate IOMMU groups

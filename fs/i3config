@@ -12,15 +12,16 @@ set $mod Mod4
 bindsym XF86AudioRaiseVolume exec pactl set-sink-volume @DEFAULT_SINK@ +2% && pactl set-sink-mute @DEFAULT_SINK@ 0
 bindsym XF86AudioLowerVolume exec pactl set-sink-volume @DEFAULT_SINK@ -2% && pactl set-sink-mute @DEFAULT_SINK@ 0
 bindsym XF86AudioMute exec pactl set-sink-mute @DEFAULT_SINK@ toggle
-bindsym       Print exec --no-startup-id gnome-screenshot -f ~/screenshots/$(date +%s).png
-bindsym Shift+Print exec --no-startup-id gnome-screenshot --area -f ~/screenshots/$(date +%s).png
+bindsym       Print exec --no-startup-id gnome-screenshot --clipboard
+bindsym Shift+Print exec --no-startup-id gnome-screenshot --area --clipboard
+bindsym Ctrl+Shift+Print exec --no-startup-id gnome-screenshot --area -f ~/screenshots/$(date +%s).png
 
 bindsym $mod+F5 exec xrandr --listmonitors | awk '{print $4}' | xargs -i xrandr --output {} --brightness 0.2
 bindsym $mod+F6 exec xrandr --listmonitors | awk '{print $4}' | xargs -i xrandr --output {} --brightness 0.42
 bindsym $mod+F7 exec xrandr --listmonitors | awk '{print $4}' | xargs -i xrandr --output {} --brightness 0.8
 bindsym $mod+F8 exec xrandr --listmonitors | awk '{print $4}' | xargs -i xrandr --output {} --brightness 1
 
-bindsym $mod+Return exec urxvt -depth 24 -bg 0 -fg 15 --color12 rgb:5c/5c/ff +sb -si -sw -sk -sl 424242 -fb 42 -keysym.Shift-Control-C eval:selection_to_clipboard -keysym.Shift-Control-V eval:paste_clipboard -print-pipe "cat > /dev/null" -tn xterm-256color
+bindsym $mod+Return exec urxvt -depth 24 -bg 0 -fg 15 --color4 rgb:7f/7f/ff --color12 rgb:60/60/ff +sb -si -sw -sk -sl 424242 -fb 42 -keysym.Shift-Control-C eval:selection_to_clipboard -keysym.Shift-Control-V eval:paste_clipboard -print-pipe "cat > /dev/null" -tn xterm-256color
 bindsym $mod+Shift+q kill
 bindsym $mod+d exec dmenu_run
 bindsym $mod+Shift+c reload

@@ -1,3 +1,4 @@
+app-admin/eclean-kernel
 app-admin/sudo
 app-arch/unrar
 app-editors/nano
@@ -11,12 +12,13 @@ app-portage/eix
 app-portage/gentoolkit
 app-portage/portpeek
 app-text/evince
-dev-java/oracle-jre-bin
+dev-java/openjdk
+dev-java/openjdk:11
 dev-python/pip
 dev-util/valgrind
 dev-vcs/git
 mail-client/thunderbird
-media-fonts/infinality-ultimate-meta
+media-fonts/fonts-meta
 media-fonts/noto
 media-fonts/noto-cjk
 media-gfx/feh
@@ -29,6 +31,7 @@ media-sound/pulseaudio
 media-video/ffmpeg
 media-video/ffmpegthumbnailer
 media-video/mpv
+net-analyzer/netcat
 net-analyzer/nmap
 net-analyzer/tcpdump
 net-analyzer/traceroute
@@ -47,6 +50,7 @@ net-p2p/rtorrent
 net-print/cups
 net-print/hplip
 net-wireless/wpa_supplicant
+sys-apps/dmidecode
 sys-apps/firejail
 sys-apps/pciutils
 sys-apps/rng-tools
@@ -57,7 +61,6 @@ sys-block/gparted
 sys-boot/grub:2
 sys-boot/unetbootin
 sys-devel/gdb
-sys-firmware/edk2-ovmf
 sys-fs/cryptsetup
 sys-fs/dosfstools
 sys-fs/ncdu
