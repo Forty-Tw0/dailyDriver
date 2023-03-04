@@ -75,17 +75,13 @@ source /etc/profile
 export PS1="(chroot) $PS1"
 
 # kernel config
-curl -L https://github.com/feniksa/gentoo_ACS_override_patch/archive/master.zip -o tmp/master.zip
-unzip tmp/master.zip -d tmp
 mkdir etc/portage/patches
-# ACS path to separate IOMMU groups
-cp -r tmp/gentoo_ACS_override_patch-master/sys-kernel etc/portage/patches/sys-kernel
 emerge sys-kernel/gentoo-sources
 emerge sys-kernel/genkernel --autounmask-write
 echo "option -3 for zz-autounmask"
 etc-update
 emerge sys-kernel/genkernel
-sed -i 's/#GRUB_CMDLINE_LINUX=""/GRUB_CMDLINE_LINUX="video=efifb:off,vesafb:off iommu=on intel_iommu=on amd_iommu=on pcie_acs_override=downstream"/g' /etc/default/grub
+sed -i 's/#GRUB_CMDLINE_LINUX=""/GRUB_CMDLINE_LINUX="video=efifb:off,vesafb:off iommu=pt intel_iommu=on amd_iommu=force_isolation"/g' /etc/default/grub
 genkernel --menuconfig all
 # genkernel always uses a fresh config, so you have to reconfigure manually or Load the old one.
 
@@ -98,12 +94,15 @@ rc-update add rngd boot
 
 # networking
 emerge --noreplace net-misc/netifrc
-#eno1 could be eth0
+ln -s /etc/init.d/net.lo /etc/init.d/net.eth0
+rc-update add /etc/init.d/net.eth0 default
 ln -s /etc/init.d/net.lo /etc/init.d/net.eno1
 rc-update add /etc/init.d/net.eno1 default
+# todo handle all the possible ethernet names
 
 # bootloader
-emerge sys-boot/grub:2
+emerge sys-boot/os-prober
+emerge sys-boot/grub
 grub-install --target=x86_64-efi --efi-directory=/boot --removable
 #use this to update grub when new kernels are installed
 grub-mkconfig -o /boot/grub/grub.cfg

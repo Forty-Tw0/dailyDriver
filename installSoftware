@@ -60,6 +60,7 @@ echo "media-gfx/gimp exif jpeg pdf png svg" >> /etc/portage/package.use/override
 emerge media-gfx/gimp
 echo "app-text/poppler cairo" >> /etc/portage/package.use/overrides
 emerge app-text/evince
+printf "\n# font substitution is broken in poppler\nfixpdf() { gs -o \"fixed_\$1\" -dPDFSETTINGS=/prepress -sDEVICE=pdfwrite \"\$1\"; }" >> /home/ljosalfur/.bashrc
 #emerge --ask app-text/calibre # for ebooks
 emerge --ask app-office/libreoffice
 emerge --ask mail-client/thunderbird
@@ -97,8 +98,9 @@ echo "Decentraleyes"
 echo "Disconnect"
 
 # QEMU
-cp fs/blacklist.conf /etc/modprobe.d/blacklist.conf
 echo "app-emulation/qemu usb pulseaudio" >> /etc/portage/package.use/overrides
 emerge app-emulation/qemu
 emerge sys-firmware/edk2-ovmf
 emerge sys-apps/usermode-utilities
+
+echo "copy world file and emerge"

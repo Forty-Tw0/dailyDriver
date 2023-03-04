@@ -10,6 +10,17 @@
 # You can find your host's SMBIOS IDs and pass those through instead. Use "dmidecode" to check
 # Need to investigate further spoofing of VirtIO drivers and those hardware IDs
 
+# For windows network and storage drivers, load virtio into the cdrom and install the Redhat drivers from there
+# Need to spoof these driver IDs later since they aid detection
+
+# ------------------------------------------------------- BIOS Config
+
+# Might need to disable Resizable Base Address Register (BAR) and/or Smart Access Memory (SAM) in your BIOS if you get Code 43 on AMD Vega and later GPUs.
+
+# Ideally, you want every PCI device to be in it's own IOMMU group.
+# If your BIOS has Access Control Services (ACS), enable it to split up the groups. Mine BIOS was hiding this option under PCI Advanced Error Reporting (AER).
+# If your groups are still not granular enough, try the ACS Override kernel patch that will fake group isolation well enough (insecure!) for this to work.
+
 # ------------------------------------------------------- Kernel Config
 
 # Outdated? https://wiki.installgentoo.com/index.php/PCI_passthrough#Step_0:_Compile_IOMMU_support_if_you_use_Gento
@@ -40,30 +51,47 @@
 #  <M>   iptables NAT support
 #  <M>     MASQUERADE target support
 
-# /etc/default/grub:21:GRUB_CMDLINE_LINUX="video=efifb:off,vesafb:off iommu=on intel_iommu=on amd_iommu=on pcie_acs_override=downstream"
+# ACS kernal patch to separate IOMMU groups, if your BIOS doesn't have an ACS option this might help
+#curl -L https://github.com/feniksa/gentoo_ACS_override_patch/archive/master.zip -o /tmp/master.zip
+#unzip /tmp/master.zip -d /tmp
+#sudo cp -r /tmp/gentoo_ACS_override_patch-master/sys-kernel /etc/portage/patches/
+# add pcie_acs_override=downstream to the GRUB_CMDLINE_LINUX in /etc/default/grub
 
-# ------------------------------------------------------- End Kernel Config
+# Make sure modesetting and the framebuffer don't reserve the GPU, enable IOMMU
+# /etc/default/grub GRUB_CMDLINE_LINUX="video=efifb:off,vesafb:off iommu=pt intel_iommu=on amd_iommu=force_isolation"
+
+# ------------------------------------------------------- Code 43 on GPU in Windows
 
 # Some GPUs might want their ROM to be passed in, I think Nvidea drivers do some checks for this. Maybe it isn't needed if the hypervisor is undetected.
 # Nvidea drivers will intentionally refuse to load properly if they detect the hv_vendor_id to be the default of "Microsoft Hv". (code 43 driver error)
+# You might be able to set hv_vendor_id to something else on the -cpu args (I have it set to random), but you might also need to pass through the ROM.
 # Dump ROM for passthorugh, you might need to put your GPU in PCIeslot2 and have another GPU in slot1 while booted into a live CD for this to work!
 #echo 1 > /sys/bus/pci/devices/$VGA_DEVICE/rom
 #cat /sys/bus/pci/devices/$VGA_DEVICE/rom > /tmp/gpu.rom
 #echo 0 > /sys/bus/pci/devices/$VGA_DEVICE/rom
+# add the rom in the qemu flags
+#-device vfio-pci,host=$VGA_DEVICE,multifunction=on,x-vga=on,rombar=1,romfile=./gpu.rom \
+
+# AMD "Reset bug" might prevent the guest from rebooting, because the GPU state can't be reset. Try to emerge with app-emulation/vendor-reset
+
+# ------------------------------------------------------- PCI GPU ID
 
 # Configure PCI device IDs and driver for GPU. The entire IOMMU group must be unbound from the host the following command can dump those groupings.
-# for iommu_group in $(find /sys/kernel/iommu_groups/ -maxdepth 1 -mindepth 1 -type d); do echo "IOMMU group $(basename "$iommu_group")"; for device in $(ls -1 "$iommu_group"/devices/); do echo -n $'\t'; lspci -nns "$device"; done; done
-VGA_DRIVER=nouveau
-VGA_DEVICE=0000:01:00.0
-HDMI_AUDIO_DEVICE=0000:01:00.1
+# for iommu_group in $(find /sys/kernel/iommu_groups/ -maxdepth 1 -mindepth 1 -type d | sed 's/\/sys\/kernel\/iommu_groups\///g' | sort -n); do echo "IOMMU group $(basename "$iommu_group")"; for device in $(ls -1 "/sys/kernel/iommu_groups/$iommu_group"/devices/); do echo -n $'\t'; lspci -nns "$device"; done; done
+#VGA_DRIVER=nouveau
+VGA_DRIVER=amdgpu
+VGA_DEVICE=0000:03:00.0
+HDMI_AUDIO_DEVICE=0000:03:00.1 # you might not have to bind the multifunction audio to vfio, but it probably has to be unbound from the linux driver
 
-echo Refresh sudo timeout to avoid a race condition.
+# ------------------------------------------------------- Start scripting things
+
+echo "Refresh the sudo timeout to avoid a race condition"
 sudo -v
 
 # Load VFIO-PCI driver so that /dev/vfio-pci is present
 sudo modprobe vfio-pci
 
-# Unbinds a device from the current drive and rebinds to the given driver.
+# Unbinds a device from the current driver and rebinds to the given driver.
 changeDriver() {
 	dev="$1"
 	driver="$2"
@@ -95,18 +123,19 @@ changeDriver() {
 
 # Save current X config to restore it later
 #savedXconfig=$(while read -r line ; do printf " %s" $line; done <<< `xrandr --current | grep " connected" | awk '{split($3,sizepos,"+"); print "--output "$1" --mode "sizepos[1]" --pos "sizepos[2]"x"sizepos[3]}'`)
-#echo Saved X config as \'xrandr $savedXconfig\'
+#echo "Saved X config as \'xrandr $savedXconfig\'"
 # Detatch from X, assuming the first monitor is the primary host monitor
 #for monitor in `xrandr --listactivemonitors | awk 'NR>2 {print $4}'`; do xrandr --output $monitor --off; done
 
-# If the host was booted with the GPU in use, unbind these
-#echo Unbinding virtual consoles and efifb
+# If the host was booted with the GPU in use by the frame buffer, unbind these
+#echo "Unbinding virtual consoles and efifb"
 #echo 0 | sudo tee /sys/class/vtconsole/vtcon0/bind
 #echo 0 | sudo tee /sys/class/vtconsole/vtcon1/bind
 #echo efi-framebuffer.0 | sudo tee /sys/bus/platform/drivers/efi-framebuffer/unbind
+# or unbind the GPU before X is started
 
 # Unbind GPU and its audio device.
-echo Unbinding GPU
+echo "Unbinding GPU"
 changeDriver $VGA_DEVICE vfio-pci
 changeDriver $HDMI_AUDIO_DEVICE vfio-pci
 
@@ -122,7 +151,7 @@ sudo iptables -A FORWARD -i vmtap10 -j ACCEPT
 sudo iptables -A FORWARD -o vmtap10 -m state --state RELATED,ESTABLISHED -j ACCEPT
 
 ### Memory Allocation
-RAM=24 # in gigabytes
+RAM=20 # in gigabytes
 #echo Mounting and dynamically allocating ${RAM}G of huge pages
 # Try to drop and compact memory for contiguous blocks
 #echo 3 | sudo tee /proc/sys/vm/drop_caches
@@ -135,7 +164,7 @@ RAM=24 # in gigabytes
 #-mem-path /dev/hugepages \
 
 ### CPU Affinity and Thread Priority
-thread_count=7 # number of threads to give the VM, treat this as CPU cores with 1 thread each
+thread_count=16 # number of threads to give the VM, treat this as CPU cores with 1 thread each
 # Spawn a background bash script to wait until VM threads have been created by Qemu
 {
   ### Notes on blocked sigmasks for Qemu threads
@@ -163,30 +192,33 @@ thread_count=7 # number of threads to give the VM, treat this as CPU cores with 
   #     also gets unblocked by qemu/target/i386/hvf/hvf.c hvf_init_vcpu() but we don't use accel=hvf
   # In short:
   #   We can identify the important VM threads by using the sigmask of fffffffe7ffbf837 because it has SIG_IPI/SIGUSR1
+  echo "Waiting for QEMU guest threads"
   while [ $(ps -Leo sigmask,comm | grep "fffffffe7ffbf837 qemu" | wc -l) -lt $thread_count ]; do
     sleep 0.5
   done
-  echo Identified VM threads
+  echo "Identified QEMU guest threads"
   tnum=0
   for pid in `ps -Leo tid,sigmask,comm | grep "fffffffe7ffbf837 qemu" | awk '{print $1}'`; do
     # TODO: Make this topology aware (NUMA nodes) Intel hyperthreading and AMD SMT do this differently
     sudo taskset -pc $((tnum++)) $pid
     # Linux has priorities of 0-99 reserved for realtime scheduling and 100-139 for normal threads
-    # Set the niceness to the max of -20 so that they have the highest priority of 0 (which 100 in userspace)
-    sudo renice -n -20 -p $pid
+    # Set the niceness to -19 so that they have the second highest priority of 1 (which is 101 in userspace)
+    sudo renice -n -19 -p $pid
     # We could give these threads the highest realtime priority (99 being 0 on the above scale), but that AGGRESSIVELY preempts the host
     # --fifo will wait until the thread releases control (if ever!), the thread will preempt others whenever it wants
     # --rr preempts like FIFO but the thread are required to yield after their time slice ends
     #sudo chrt --rr -p 99 $pid
   done
-  echo VM threads pinned to CPU cores and prioritised
+  echo "QEMU guest threads pinned to CPU cores and prioritised"
 } &
 
 ### QEMU
 sudo qemu-system-x86_64 -monitor stdio -vnc :1 -vga none -usb \
 -machine type=q35,accel=kvm,kernel_irqchip=on -enable-kvm \
 -rtc base=localtime -no-hpet \
--drive if=pflash,format=raw,file=/usr/share/edk2-ovmf/OVMF_CODE.fd \
+-drive if=pflash,readonly=on,format=raw,file=/usr/share/edk2-ovmf/OVMF_CODE.fd \
+-drive if=pflash,format=raw,file=/usr/share/edk2-ovmf/OVMF_VARS.fd \
+-drive file=/dev/nvme1n1,format=raw,cache=none,aio=native \
 -smbios type=0,vendor=$RANDOM,version=$RANDOM,date=$RANDOM,release=$RANDOM.$RANDOM,uefi=on \
 -smbios type=1,manufacturer=$RANDOM,product=$RANDOM,version=$RANDOM,serial=$RANDOM,uuid=$(uuidgen),sku=$RANDOM,family=$RANDOM \
 -smbios type=2,manufacturer=$RANDOM,product=$RANDOM,version=$RANDOM,serial=$RANDOM,asset=$RANDOM,location=$RANDOM \
@@ -196,49 +228,51 @@ sudo qemu-system-x86_64 -monitor stdio -vnc :1 -vga none -usb \
 -smbios type=17,manufacturer=$RANDOM,serial=$RANDOM,asset=$RANDOM,loc_pfx=$RANDOM,bank=$RANDOM,part=$RANDOM,speed=$RANDOM \
 -cpu host,kvm=off,hypervisor=false,-hypervisor,hv-relaxed,hv-vapic,hv_spinlocks=0x1fff,hv-vpindex,hv-runtime,hv-time,hv-synic,hv-stimer,hv-tlbflush,hv-ipi,hv_vendor_id=$RANDOM \
 -smp sockets=1,cores=$thread_count,threads=1 -m ${RAM}G \
--device ich9-intel-hda,bus=pcie.0,addr=0x1b -device hda-micro,audiodev=hda \
--audiodev pa,id=hda,server=unix:/run/user/$(id -u)/pulse/native,timer-period=1000,in.frequency=48000,out.frequency=48000 \
+-device pcie-root-port,id=gpubus,chassis=1 \
+-device vfio-pci,host=$VGA_DEVICE,bus=gpubus,addr=00.0,multifunction=on,x-vga=on \
+-device vfio-pci,host=$HDMI_AUDIO_DEVICE,bus=gpubus,addr=00.1 \
+-device ich9-intel-hda,bus=pcie.0,addr=1b.0 -device hda-micro,audiodev=hda \
 -device usb-audio,audiodev=usb,multi=on \
+-audiodev pa,id=hda,server=unix:/run/user/$(id -u)/pulse/native,timer-period=1000,in.frequency=48000,out.frequency=48000 \
 -audiodev pa,id=usb,server=unix:/run/user/$(id -u)/pulse/native,out.mixing-engine=off \
--device vfio-pci,host=$VGA_DEVICE,x-vga=on,multifunction=off,rombar=1,romfile=./gpu.rom \
--device usb-host,hostbus=3,hostport=3 \
--device usb-host,hostbus=3,hostport=4 \
+-device usb-host,hostbus=3,hostport=2 \
+-device usb-host,hostbus=3,hostport=7 \
 -device usb-host,vendorid=0x046d,productid=0xc215 \
 -device usb-host,vendorid=0x045e,productid=0x028e \
--drive file=/dev/disk/by-partuuid/385c0f02-3e9e-4c44-8613-92c40e35582a,format=raw,cache=none \
--serial tcp::4545,server,nowait \
 -netdev tap,id=tap0,ifname=vmtap10,script=no,downscript=no,vhost=on \
 -device virtio-net-pci,netdev=tap0,mac=$(openssl rand -hex 6 | sed 's/\(..\)/\1:/g; s/:$//') \
 -netdev user,id=samba,smb=/samba -device virtio-net-pci,netdev=samba
-#-device usb-host,vendorid=1133,productid=49685 \
 
-# For windows network and storage drivers, load virtio into the cdrom
-# Need to spoof these driver IDs later since they aid detection
+# todo: nvme controller passthrough https://qemu.readthedocs.io/en/latest/system/qemu-block-drivers.html
 
-### Cleanup
+# USB bus, port, vendorID:productID, name
+# find /sys/bus/usb/devices/ | xargs -I{} cat {}/busnum {}/devpath {}/idVendor {}/idProduct {}/product 2> /dev/null | sed 'N;N;N;N;s/\n/ /g' | awk '{printf $1 "-" $2 "\t" $3 ":" $4 "\t "; for(i=5;i<=NF;i++){printf $i}; printf "\n"}' | sort
 
-echo Refresh sudo timeout to avoid a race condition.
+# ------------------------------------------------------- Cleanup
+
+echo "Exited QEMU, starting cleanup"
+echo "Refresh the sudo timeout to avoid a race condition"
 sudo -v
 
-#echo Freeing huge pages
+#echo "Freeing huge pages"
 #sudo sysctl vm.nr_hugepages=0
 
-echo Cleaning up network
+echo "Cleaning up the virtual network"
 sudo iptables -F
 sudo iptables -t nat -F POSTROUTING
 sudo ip link delete vmtap10
 sudo tunctl -d vmtap10
 
-echo Rebinding GPU
-changeDriver $VGA_DEVICE $VGA_DRIVER
-changeDriver $HDMI_AUDIO_DEVICE $AUDIO_DRIVER
+echo "Rebinding GPU"
+#changeDriver $VGA_DEVICE $VGA_DRIVER
+#changeDriver $HDMI_AUDIO_DEVICE $AUDIO_DRIVER
 
-#echo Rebinding efifb and virtual consoles # so that the host can use the GPU again
+#echo "Rebinding efifb and virtual consoles # so that the host can use the GPU again"
 #echo efi-framebuffer.0 | sudo tee /sys/bus/platform/drivers/efi-framebuffer/bind
 #echo 1 | sudo tee /sys/class/vtconsole/vtcon0/bind
 #echo 1 | sudo tee /sys/class/vtconsole/vtcon1/bind
 
 # re-enable monitors in X
-xrandr $savedXconfig
+#xrandr $savedXconfig
 
-echo Done
+echo "Done"

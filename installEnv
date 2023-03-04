@@ -18,10 +18,9 @@ emerge sys-auth/elogind
 rc-update add dbus default
 rc-update add elogind boot
 emerge x11-base/xorg-server
-cp fs/xorg.conf /etc/X11/xorg.conf.d/xorg.conf
 emerge x11-misc/numlockx
 rc-update add numlock default
-emerge x11-misc/compton
+emerge x11-misc/picom
 #emerge --ask x11-misc/xbacklight
 #emerge --ask x11-misc/redshift
 emerge x11-misc/arander
@@ -36,15 +35,11 @@ echo "x11-terms/rxvt-unicode 256-color" >> /etc/portage/package.use/overrides
 emerge x11-terms/rxvt-unicode
 #make copy pasta work
 emerge app-misc/tmux
-emerge media-libs/fontconfig-infinality
-eselect infinality set infinality
-eselect lcdfilter set infinality
-# disable all others in fontconfig, maybe need to sudo the xarg'd eselect if you are not root
-eselect fontconfig list | awk '{print $1}' | sed 's/[^0-9]//g' | xargs eselect fontconfig disable
-eselect fontconfig enable 52-infinality.conf
-emerge media-fonts/infinality-ultimate-meta
 emerge --ask media-fonts/noto
 emerge --ask media-fonts/noto-cjk
+# disable all others in fontconfig, maybe need to sudo the xarg'd eselect if you are not root
+eselect fontconfig list | awk '{print $1}' | sed 's/[^0-9]//g' | xargs eselect fontconfig disable
+eselect fontconfig list | grep mono | awk '{print $1}' | sed 's/[^0-9]//g' | xargs eselect fontconfig enable
 #set urxvt font somehow
 #TODO: make the iGPU primary so we can use GPU for PCI passthrough later
 echo "media-libs/imlib2 png gif jpeg" >> /etc/portage/package.use/overrides
@@ -53,6 +48,7 @@ emerge media-gfx/feh
 # services
 rc-update add metalog default
 emerge --config sys-libs/timezone-data
+emerge net-misc/dhcpcd
 emerge net-misc/openntpd
 rc-update add ntpd default
 emerge sys-apps/firejail

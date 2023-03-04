@@ -6,17 +6,15 @@ exit
 # https://wiki.gentoo.org/wiki/Gentoo_Cheat_Sheet
 
 # https://wiki.gentoo.org/wiki/Security_Handbook/Staying_up-to-date
-sudo emaint -a sync && sudo eix-update
 #sudo glsa-check -p $(glsa-check -t all)
 #sudo glsa-check -f $(glsa-check -t all)
 
+sudo emaint -a sync && sudo eix-update
+
 # kernel upgrade
 eselect kernel list
-sudo eselect kernel set 1
-curl -L https://github.com/feniksa/gentoo_ACS_override_patch/archive/master.zip -o /tmp/master.zip
-unzip /tmp/master.zip
-sudo cp -r /tmp/gentoo_ACS_override_patch-master/sys-kernel /etc/portage/patches/sys-kernel
-# this patch is only activated after gentoo-sources emerge
+#sudo eselect kernel set idGoesHere
+# kernel patches are only activated after gentoo-sources emerge
 sudo emerge -v gentoo-sources
 zcat /proc/config.gz > /tmp/current_kernel.config
 sudo genkernel --kernel-config=/tmp/current_kernel.config all
@@ -28,10 +26,8 @@ sudo eclean-kernel --ask -n 2 # keep the new and old kernel, warning: doesn't ac
 # unfirejail bzip2 by deleting symlinks at /usr/local/bin/
 # bzip2, patch, fontforge not working
 
-sudo ACCEPT_LICENSE="*" emerge --ask --update --verbose-conflicts --autounmask-write --changed-use --deep --keep-going --with-bdeps=y --exclude="" @world
-# I think I had tons of conflicts with autounmask-write last time...
-# dont forget to merge /etc also dont forget that it will overwrite your config instead of actually automerging...
-# use dispatch-conf instead of etc-update
+sudo ACCEPT_LICENSE="*" VIDEO_CARDS="intel amdgpu radeonsi radeon nouveau fbdev vesa" emerge --ask --update --verbose-conflicts --autounmask-write --changed-use --deep --keep-going --with-bdeps=y --exclude="" @world
+# autounmask-write might cause conflicts sometimes
 sudo dispatch-conf
 
 # fix
@@ -73,7 +69,7 @@ emerge ~<package-name>-version
 qlist <package-name>
 
 # show parents of the package
-equery d <package-name>
+equery depends <package-name>
 
 # manually step through the emerge process, lets you patch the source before compile
 ebuild /usr/portage/<.ebuild> fetch
@@ -85,3 +81,6 @@ ebuild /usr/portage/<.ebuild> clean
 
 # uninstall
 emerge --ask --depclean -v <package>
+
+# I killed removed this java symlink to get java 11 working
+# /usr/bin/java -> /usr/libexec/eselect-java/run-java-tool.bash
