@@ -1,22 +1,17 @@
 #!/bin/bash
-echo "I would rather not execute this as is."
 exit
 
-# Some things may request an etc-update for USE values
-
-# Gentoo tools
-emerge app-portage/eix
-emerge app-portage/gentoolkit
-emerge app-portage/portpeek
-emerge app-admin/sudo
 sed -i 's/replace-wscomments=no/replace-wscomments=yes/g' /etc/dispatch-conf.conf
+
+# list of packages to install
+cp fs/package.use /etc/portage/package.use
+cp fs/world /var/lib/portage/world
+
+sudo ACCEPT_LICENSE="* @FREE" VIDEO_CARDS="intel amdgpu radeonsi radeon nouveau fbdev vesa" emerge --ask --update --verbose-conflicts --autounmask --autounmask-write --changed-use --deep --keep-going --with-bdeps=y --jobs=8 @world
+sudo dispatch-conf
 
 # X
 euse -E X
-emerge sys-auth/elogind
-# consolekit must be started for pulseaudio to work
-rc-update add dbus default
-rc-update add elogind boot
 emerge x11-base/xorg-server
 emerge x11-misc/numlockx
 rc-update add numlock default
@@ -33,30 +28,31 @@ chown root:root /etc/i3/i3status
 emerge x11-misc/dmenu
 echo "x11-terms/rxvt-unicode 256-color" >> /etc/portage/package.use/overrides
 emerge x11-terms/rxvt-unicode
-#make copy pasta work
-emerge app-misc/tmux
+echo "media-libs/imlib2 png gif jpeg" >> /etc/portage/package.use/overrides
+emerge media-gfx/feh
+
 emerge --ask media-fonts/noto
 emerge --ask media-fonts/noto-cjk
 # disable all others in fontconfig, maybe need to sudo the xarg'd eselect if you are not root
 eselect fontconfig list | awk '{print $1}' | sed 's/[^0-9]//g' | xargs eselect fontconfig disable
 eselect fontconfig list | grep mono | awk '{print $1}' | sed 's/[^0-9]//g' | xargs eselect fontconfig enable
 #set urxvt font somehow
-#TODO: make the iGPU primary so we can use GPU for PCI passthrough later
-echo "media-libs/imlib2 png gif jpeg" >> /etc/portage/package.use/overrides
-emerge media-gfx/feh
+
+sed -i 's/clock="UTC"/clock="local"/g' /etc/conf.d/hwclock
 
 # services
 rc-update add metalog default
-emerge --config sys-libs/timezone-data
-emerge net-misc/dhcpcd
-emerge net-misc/openntpd
 rc-update add ntpd default
-emerge sys-apps/firejail
-emerge sys-fs/ntfs3g
+rc-update add dbus default
 cp fs/udevRules /etc/udev/rules.d/automount.rules
-emerge net-dns/dnscrypt-proxy
+emerge sys-auth/elogind
+rc-update add elogind boot
+
+echo "Cyberia" > /etc/hostname
+echo "127.0.0.1	Cyberia" > /etc/hosts
 printf "nameserver 127.0.0.1\noptions edns0" > /etc/resolv.conf
 chattr +i /etc/resolv.conf
+
 sed -i 's/127.0.0.1:53/127.0.0.1:5353/g' /etc/dnscrypt-proxy/dnscrypt-proxy.toml
 sed -i 's/\[::1\]:53/\[::1\]:5353/g' /etc/dnscrypt-proxy/dnscrypt-proxy.toml
 sed -i 's/9.9.9.9/1.1.1.1/g' /etc/dnscrypt-proxy/dnscrypt-proxy.toml
@@ -64,29 +60,53 @@ printf "  [static.'cloudflare']\n  stamp = 'sdns://AgcAAAAAAAAABzEuMC4wLjGgENk8m
 sed -i 's/command="\/usr\/bin\/dnscrypt-proxy/command="firejail \/usr\/bin\/dnscrypt-proxy/g' /etc/init.d/dnscrypt-proxy
 sed -i 's/command_user=/#command_user=/g' /etc/init.d/dnscrypt-proxy
 rc-update add dnscrypt-proxy default
-emerge net-dns/unbound
+
 sed -i 's/# do-not-query-localhost: yes/do-not-query-localhost: no/g' /etc/unbound/unbound.conf
 printf "\nforward-zone:\nname: \".\"\nforward-addr: 127.0.0.1@5353" >> /etc/unbound/unbound.conf
 #sed -i 's/--exec/--exec firejail/g' /etc/init.d/unbound
 rc-update add unbound default
-echo "net-wireless/wpa_supplicant qt5" > /etc/portage/package.use/overrides
-emerge net-wireless/wpa_supplicant
+
 printf "ctrl_interface=DIR=/run/wpa_supplicant GROUP=wheel\nupdate_config=1" > /etc/wpa_supplicant/wpa_supplicant.conf
 chmod 600 /etc/wpa_supplicant/wpa_supplicant.conf
 #echo "wpa_supplicant_args=\"-B -M -c/etc/wpa_supplicant/wpa_supplicant.conf\"" > /etc/conf.d/wpa_supplicant
 printf "modules_wlan0=\"wpa_supplicant\"\nconfig_wlan0=\"dhcp\"" > /etc/conf.d/net
 rc-update add wpa_supplicant default
-echo "net-print/cups usb" >> /etc/portage/package.use/overrides
-emerge net-print/hplip
+
 #hp-setup
-emerge net-print/cups
 rc-update add cupsd default
 rc-update add cups-browsed default
 # http://localhost:631/
-#emerge x11-misc/x11vnc
-#sshd
-rc-update add consolekit default
-emerge media-sound/pulseaudio
+
 sed -i 's/^load-module module-native-protocol-unix$/load-module module-native-protocol-unix auth-anonymous=1/g' /etc/pulse/default.pa
-emerge media-sound/pavucontrol
 gpasswd -d root audio
+echo "%wheel ALL=(ALL) ALL" > /etc/sudoers.d/sudo
+
+# user
+useradd -ou 4242 -s /bin/bash -G portage,usb,video,wheel,cdrom,wireshark,lpadmin ljosalfur
+passwd ljosalfur
+cp fs/xinitrc /home/ljosalfur/.xinitrc
+chown ljosalfur:ljosalfur /home/ljosalfur/.xinitrc
+mkdir /home/ljosalfur/screenshots
+printf "\n# alias for suspend to ram\nalias slp=\"echo mem | sudo tee /sys/power/state > /dev/null\"" >> /home/ljosalfur/.bashrc
+printf "\nalias wipe=\"sudo grub-reboot \\\\\"Memtest86+\\\\\" && sudo reboot\"" >> /home/ljosalfur/.bashrc
+printf "\n# Ranger options\nalias ranger=\"ranger --cmd='set show_hidden true' --cmd='set vcs_aware true' --cmd='set vcs_backend_git enabled' --cmd='set preview_images_method w3m' --cmd='set preview_images true'\"\n" >> /home/ljosalfur/.bashrc
+printf "\n# Slack\nalias slack=\"(cd /opt/slack && ./slack &)\"\n" >> /home/ljosalfur/.bashrc
+printf "\n# font substitution is broken in poppler\nfixpdf() { gs -o \"fixed_\$1\" -dPDFSETTINGS=/prepress -sDEVICE=pdfwrite \"\$1\"; }" >> /home/ljosalfur/.bashrc
+
+#emerge --ask dev-java/openjdk
+#wget -O /tmp/tos.sh https://mediaserver.thinkorswim.com/installer/InstFiles/thinkorswim_installer.sh
+#sh /tmp/tos.sh
+#printf "\n# ThinkOrSwim\nalias thinkorswim=\"(cd ~/thinkorswim && /usr/bin/java -jar launcher.jar -Dsun.java2d.opengl=true)\"\n" >> /home/ljosalfur/.bashrc
+
+# make links (like in slack) open with firefox
+#follow up actions
+echo "cp fs/user.js to your firefox profile"
+echo "Install firefox extensions:"
+echo "HTTPS Everywhere"
+echo "uMatrix"
+echo "uBlock Origin"
+echo "CanvasBlocker"
+echo "Google Redirects Fixer & Tracking Remover"
+echo "Privacy Badger"
+echo "Decentraleyes"
+echo "Disconnect"

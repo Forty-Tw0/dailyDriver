@@ -2,7 +2,8 @@ numlockx on
 # make slave GPUs obey the master GPU
 xrandr --setprovideroutputsource 1 0
 # Setup my preferred display layout
-xrandr --output DisplayPort-0 --off --output DisplayPort-1 --off --output DisplayPort-2 --mode 3440x1440 --pos 0x0 --rotate normal --output HDMI-A-0 --off --output HDMI-A-1-1 --mode 1920x1080 --pos 3440x0 --rotate normal --output DisplayPort-1-3 --off --output DisplayPort-1-4 --off --output DisplayPort-1-5 --off
+#xrandr --output DisplayPort-0 --off --output DisplayPort-1 --off --output DisplayPort-2 --mode 3440x1440 --pos 0x0 --rotate normal --output HDMI-A-0 --off --output HDMI-A-1-1 --mode 1920x1080 --pos 3440x0 --rotate normal --output DisplayPort-1-3 --off --output DisplayPort-1-4 --off --output DisplayPort-1-5 --off
+xrandr --output DP-3 --mode 3440x1440 --pos 0x0 --rotate normal	--output HDMI-A-2 --mode 1920x1080 --pos 3440x0 --rotate normal --output DisplayPort-1-2 --mode 3440x1440 --pos 0x0 --rotate normal --output HDMI-A-1 --primary --mode 1920x1080 --pos 3440x0 --rotate normal
 # init brightness
 xrandr --listmonitors | awk '{print $4}' | xargs -i xrandr --output {} --brightness 0.84
 

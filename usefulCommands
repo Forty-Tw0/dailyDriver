@@ -26,13 +26,12 @@ sudo eclean-kernel --ask -n 2 # keep the new and old kernel, warning: doesn't ac
 # unfirejail bzip2 by deleting symlinks at /usr/local/bin/
 # bzip2, patch, fontforge not working
 
-sudo ACCEPT_LICENSE="*" VIDEO_CARDS="intel amdgpu radeonsi radeon nouveau fbdev vesa" emerge --ask --update --verbose-conflicts --autounmask-write --changed-use --deep --keep-going --with-bdeps=y --exclude="" @world
-# autounmask-write might cause conflicts sometimes
+sudo ACCEPT_LICENSE="* @FREE" VIDEO_CARDS="intel amdgpu radeonsi radeon nouveau fbdev vesa" emerge --ask --update --verbose-conflicts --autounmask --autounmask-write --changed-use --deep --keep-going --with-bdeps=y --exclude="" --jobs=8 @world
 sudo dispatch-conf
 
 # fix
 sudo revdep-rebuild -v portage_options='--ask'
-sudo ACCEPT_LICENSE="*" perl-cleaner --all
+sudo ACCEPT_LICENSE="* @FREE" perl-cleaner --all
 
 # clean
 sudo emerge --ask --depclean -v

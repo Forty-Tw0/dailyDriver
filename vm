@@ -151,7 +151,7 @@ sudo iptables -A FORWARD -i vmtap10 -j ACCEPT
 sudo iptables -A FORWARD -o vmtap10 -m state --state RELATED,ESTABLISHED -j ACCEPT
 
 ### Memory Allocation
-RAM=20 # in gigabytes
+RAM=24 # in gigabytes
 #echo Mounting and dynamically allocating ${RAM}G of huge pages
 # Try to drop and compact memory for contiguous blocks
 #echo 3 | sudo tee /proc/sys/vm/drop_caches

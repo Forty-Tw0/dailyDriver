@@ -1,0 +1,8 @@
+mount --rbind /dev /mnt/gentoo/dev
+mount --make-rslave gentoo/dev
+mount -t proc /proc gentoo/proc
+mount --rbind /sys gentoo/sys
+mount --make-rslave gentoo/sys
+mount --rbind /tmp gentoo/tmp
+mount --bind /run gentoo/run
+chroot gentoo
