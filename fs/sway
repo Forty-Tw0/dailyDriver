@@ -118,3 +118,7 @@ bar {
 		urgent_workspace   #ff0000  #ff0000  #000000
 	}
 }
+
+input type:touchpad {
+	click_method clickfinger
+}
