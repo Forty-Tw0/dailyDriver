@@ -25,10 +25,12 @@ chown root:root /etc/i3/config
 emerge x11-misc/i3status
 cp fs/i3status /etc/i3/i3status
 chown root:root /etc/i3/i3status
+cp fs/sway /etc/sway/config
+mkdir -p ~/.config/waybar/
+cp fs/wayland.config ~/.config/waybar/config
+cp fs/wayland.style.css ~/.config/waybar/style.css
 emerge x11-misc/dmenu
-echo "x11-terms/rxvt-unicode 256-color" >> /etc/portage/package.use/overrides
 emerge x11-terms/rxvt-unicode
-echo "media-libs/imlib2 png gif jpeg" >> /etc/portage/package.use/overrides
 emerge media-gfx/feh
 
 emerge --ask media-fonts/noto
@@ -86,6 +88,7 @@ useradd -ou 4242 -s /bin/bash -G portage,usb,video,wheel,cdrom,wireshark,lpadmin
 passwd ljosalfur
 cp fs/xinitrc /home/ljosalfur/.xinitrc
 chown ljosalfur:ljosalfur /home/ljosalfur/.xinitrc
+cp fs/.Xdefaults ~/.Xdefaults
 mkdir /home/ljosalfur/screenshots
 printf "\n# alias for suspend to ram\nalias slp=\"echo mem | sudo tee /sys/power/state > /dev/null\"" >> /home/ljosalfur/.bashrc
 printf "\nalias wipe=\"sudo grub-reboot \\\\\"Memtest86+\\\\\" && sudo reboot\"" >> /home/ljosalfur/.bashrc

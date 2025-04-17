@@ -1,15 +1,11 @@
-#!/bin/bash
 echo "I would rather not execute this as is."
 exit
 
 # https://wiki.gentoo.org/wiki/Handbook:AMD64/Working/USE
 # https://wiki.gentoo.org/wiki/Gentoo_Cheat_Sheet
 
-# https://wiki.gentoo.org/wiki/Security_Handbook/Staying_up-to-date
-#sudo glsa-check -p $(glsa-check -t all)
-#sudo glsa-check -f $(glsa-check -t all)
-
-sudo emaint -a sync && sudo eix-update
+# world file - contains manually installed packages
+# /var/lib/portage/world
 
 # kernel upgrade
 eselect kernel list
@@ -20,35 +16,6 @@ zcat /proc/config.gz > /tmp/current_kernel.config
 sudo genkernel --kernel-config=/tmp/current_kernel.config all
 sudo grub-mkconfig -o /boot/grub/grub.cfg
 sudo eclean-kernel --ask -n 2 # keep the new and old kernel, warning: doesn't actually care about version numbers
-
-### Firejail breaks some things with an ld.so/libsandbox.so error and something about env vars being too long
-# https://bugs.gentoo.org/694966
-# unfirejail bzip2 by deleting symlinks at /usr/local/bin/
-# bzip2, patch, fontforge not working
-
-sudo ACCEPT_LICENSE="* @FREE" VIDEO_CARDS="intel amdgpu radeonsi radeon nouveau fbdev vesa" emerge --ask --update --verbose-conflicts --autounmask --autounmask-write --changed-use --deep --keep-going --with-bdeps=y --exclude="" --jobs=8 @world
-sudo dispatch-conf
-
-# fix
-sudo revdep-rebuild -v portage_options='--ask'
-sudo ACCEPT_LICENSE="* @FREE" perl-cleaner --all
-
-# clean
-sudo emerge --ask --depclean -v
-eix-test-obsolete
-sudo portpeek -a
-sudo eclean --deep distfiles
-sudo eclean --deep packages
-# just delete all source files
-sudo rm -rf /usr/portage/distfiles
-# cleanup dangling temp files TODO: use a RAM tmpfs
-sudo rm -rf /var/tmp/portage
-
-############################################
-exit
-
-# world file - contains manually installed packages
-# /var/lib/portage/world
 
 # check enabled USE flags
 portageq envvar USE | xargs -n 1

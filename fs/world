@@ -5,7 +5,7 @@ app-containers/docker
 app-containers/docker-compose
 app-editors/nano
 app-editors/vim
-app-emulation/qemu
+app-editors/vscodium
 app-misc/jq
 app-misc/ranger
 app-misc/tmux
@@ -21,11 +21,13 @@ dev-java/openjdk-bin
 dev-java/openjdk-bin:11
 dev-python/pip
 dev-vcs/git
+gui-apps/waybar
 gui-wm/sway
 mail-client/thunderbird
 media-fonts/fonts-meta
 media-fonts/noto
 media-fonts/noto-cjk
+media-fonts/noto-emoji
 media-gfx/feh
 media-gfx/gimp
 media-gfx/gnome-screenshot
@@ -43,7 +45,6 @@ net-analyzer/wireshark
 net-dns/bind-tools
 net-dns/dnscrypt-proxy
 net-dns/unbound
-net-fs/samba
 net-im/discord
 net-im/slack
 net-misc/dhcpcd
@@ -55,6 +56,7 @@ net-print/hplip
 net-wireless/wpa_supplicant
 sys-apps/dmidecode
 sys-apps/firejail
+sys-apps/fwupd
 sys-apps/memtest86+
 sys-apps/pciutils
 sys-apps/portage
@@ -71,14 +73,16 @@ sys-fs/dosfstools
 sys-fs/ncdu
 sys-fs/ntfs3g
 sys-kernel/genkernel
+sys-kernel/gentoo-kernel
 sys-kernel/gentoo-sources
+sys-power/acpilight
 sys-power/hibernate-script
 sys-power/suspend
 sys-process/htop
 sys-process/lsof
+virtual/dist-kernel
 www-client/firefox
 x11-apps/mesa-progs
-x11-apps/xbacklight
 x11-base/xorg-drivers
 x11-base/xorg-server
 x11-misc/arandr
@@ -86,5 +90,5 @@ x11-misc/dmenu
 x11-misc/i3status
 x11-misc/numlockx
 x11-misc/picom
+x11-misc/urxvt-font-size
 x11-terms/rxvt-unicode
-x11-wm/i3-gaps

@@ -1,0 +1,41 @@
+* {
+  font-family: "Noto Sans Mono", "DejaVu Sans Mono", monospace;
+  font-size: 24px;
+  color: #ffffff;
+}
+
+window {
+  background: #000000;
+  border: none;
+}
+
+#custom-sep {
+  color: #ffffff;
+  margin-left: 10px;
+  margin-right: 10px;
+}
+
+#battery.charging, #battery.plugged {
+  color: #00ff00;
+}
+#battery.:not(.charging) {
+  color: #ffff00;
+}
+#battery.critical:not(.charging) {
+  color: #ff0000;
+  animation-name: blink;
+  animation-duration: 0.5s;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+  animation-direction: alternate;
+}
+@keyframes blink {
+  to {
+    background-color: #BF616A;
+    color: #A6E3A1;
+  }
+}
+
+#pulseaudio {
+  color: #1e90ff;
+}

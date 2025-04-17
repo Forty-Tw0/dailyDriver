@@ -21,7 +21,8 @@ bindsym $mod+F6 exec xrandr --listmonitors | awk '{print $4}' | xargs -i xrandr 
 bindsym $mod+F7 exec xrandr --listmonitors | awk '{print $4}' | xargs -i xrandr --output {} --brightness 0.8
 bindsym $mod+F8 exec xrandr --listmonitors | awk '{print $4}' | xargs -i xrandr --output {} --brightness 1
 
-bindsym $mod+Return exec urxvt -depth 24 -bg 0 -fg 15 --color4 rgb:7f/7f/ff --color12 rgb:60/60/ff +sb -si -sw -sk -sl 424242 -fb 42 -keysym.Shift-Control-C eval:selection_to_clipboard -keysym.Shift-Control-V eval:paste_clipboard -print-pipe "cat > /dev/null" -tn xterm-256color
+bindsym $mod+Return exec urxvt -depth 24 -bg 0 -fg 15 --color4 rgb:7f/7f/ff --color12 rgb:60/60/ff +sb -si -sw -sk -sl 424242 -fb 42 -print-pipe "cat > /dev/null" -tn xterm-256color
+#bindsym $mod+Return exec urxvt -depth 24 -bg 0 -fg 15 --color4 rgb:7f/7f/ff --color12 rgb:60/60/ff +sb -si -sw -sk -sl 424242 -fb 42 -keysym.Shift-Control-C eval:selection_to_clipboard -keysym.Shift-Control-V eval:paste_clipboard -print-pipe "cat > /dev/null" -tn xterm-256color
 bindsym $mod+Shift+q kill
 bindsym $mod+d exec dmenu_run
 bindsym $mod+Shift+c reload

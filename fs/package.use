@@ -1,4 +1,4 @@
-x11-terms/rxvt-unicode 256-color
+x11-terms/rxvt-unicode 256-color perl
 media-libs/imlib2 png gif jpeg
 net-wireless/wpa_supplicant qt5
 www-client/w3m imlib
@@ -11,10 +11,7 @@ x11-libs/gtk+ cups
 www-client/firefox pulseaudio
 net-analyzer/nmap ncat nping zenmap
 gui-wm/sway tray
-# required by www-client/firefox-78.11.0::gentoo
-# required by @selected
-# required by @world (argument)
->=media-libs/libvpx-1.10.0 postproc
+gui-apps/waybar tray pulseaudio network wifi upower
 # required by x11-libs/pango-1.48.7::gentoo
 # required by gnome-base/librsvg-2.50.7::gentoo
 # required by app-text/evince-40.2::gentoo
@@ -42,3 +39,28 @@ gui-wm/sway tray
 # required by @selected
 # required by @world (argument)
 >=sys-libs/zlib-1.2.12-r2 minizip
+# required by x11-libs/wxGTK-3.2.2.1-r2::gentoo
+# required by media-sound/audacity-3.2.5::gentoo
+# required by @selected
+# required by @world (argument)
+>=dev-libs/libpcre2-10.42-r1 pcre32
+# required by www-client/firefox-115.3.1::gentoo[system-libvpx]
+# required by @selected
+# required by @world (argument)
+>=media-libs/libvpx-1.13.1 postproc
+# required by sys-power/suspend-1.0_p20200924::gentoo[crypt]
+# required by suspend (argument)
+>=dev-libs/libgcrypt-1.10.3-r1 static-libs
+# required by sys-power/suspend-1.0_p20200924::gentoo[crypt]
+# required by suspend (argument)
+>=dev-libs/libgpg-error-1.49 static-libs
+# required by sys-power/suspend-1.0_p20200924::gentoo[lzo]
+# required by suspend (argument)
+>=dev-libs/lzo-2.10 static-libs
+# required by sys-kernel/gentoo-kernel-6.6.62::gentoo[initramfs]
+# required by virtual/dist-kernel-6.6.62::gentoo
+>=sys-kernel/installkernel-48-r1 dracut
+# required by gui-apps/waybar-0.11.0-r1::gentoo[tray]
+# required by @selected
+# required by @world (argument)
+>=dev-libs/libdbusmenu-16.04.0-r2 gtk3
