@@ -4,6 +4,10 @@ focus_on_window_activation urgent
 mouse_warping none
 no_focus [class=".*"]
 
+# Export the Wayland desktop context into D-Bus so xdg-desktop-portal
+# can auto-start the wlroots screencast backend on Sway.
+exec_always dbus-update-activation-environment WAYLAND_DISPLAY XDG_CURRENT_DESKTOP=sway
+
 # KEY BINDINGS
 
 # Windows key as modifier

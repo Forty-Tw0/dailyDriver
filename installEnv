@@ -29,6 +29,7 @@ cp fs/sway /etc/sway/config
 mkdir -p ~/.config/waybar/
 cp fs/wayland.config ~/.config/waybar/config
 cp fs/wayland.style.css ~/.config/waybar/style.css
+cp fs/portals.conf ~/.config/xdg-desktop-portal/portals.conf
 emerge x11-misc/dmenu
 emerge x11-terms/rxvt-unicode
 emerge media-gfx/feh

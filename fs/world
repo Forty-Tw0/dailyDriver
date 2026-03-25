@@ -6,6 +6,8 @@ app-containers/docker-compose
 app-editors/nano
 app-editors/vim
 app-editors/vscodium
+app-emacs/rg
+app-eselect/eselect-repository
 app-misc/jq
 app-misc/ranger
 app-misc/tmux
@@ -15,6 +17,7 @@ app-portage/eix
 app-portage/gentoolkit
 app-portage/portpeek
 app-text/evince
+dev-db/mariadb
 dev-debug/gdb
 dev-debug/valgrind
 dev-java/openjdk-bin
@@ -47,6 +50,7 @@ net-dns/dnscrypt-proxy
 net-dns/unbound
 net-im/discord
 net-im/slack
+net-libs/nodejs
 net-misc/dhcpcd
 net-misc/netifrc
 net-misc/openntpd
@@ -63,6 +67,9 @@ sys-apps/portage
 sys-apps/rng-tools
 sys-apps/usbutils
 sys-apps/usermode-utilities
+sys-apps/xdg-desktop-portal
+sys-apps/xdg-desktop-portal-gtk
+sys-apps/yarn
 sys-auth/elogind
 sys-block/gparted
 sys-boot/grub:2
@@ -81,6 +88,7 @@ sys-power/suspend
 sys-process/htop
 sys-process/lsof
 virtual/dist-kernel
+www-client/brave-browser
 www-client/firefox
 x11-apps/mesa-progs
 x11-base/xorg-drivers

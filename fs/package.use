@@ -3,15 +3,17 @@ media-libs/imlib2 png gif jpeg
 net-wireless/wpa_supplicant qt5
 www-client/w3m imlib
 media-video/ffmpeg openssl
-media-video/mpv dvd pulseaudio
-app-emulation/qemu usb pulseaudio
+media-video/mpv dvd
+app-emulation/qemu usb
 net-print/cups usb
 app-text/poppler cairo
 x11-libs/gtk+ cups
-www-client/firefox pulseaudio
 net-analyzer/nmap ncat nping zenmap
 gui-wm/sway tray
-gui-apps/waybar tray pulseaudio network wifi upower
+gui-apps/waybar tray network wifi upower
+net-libs/nodejs npm
+dev-db/mariadb -server
+media-video/pipewire v4l libcamera
 # required by x11-libs/pango-1.48.7::gentoo
 # required by gnome-base/librsvg-2.50.7::gentoo
 # required by app-text/evince-40.2::gentoo
@@ -27,10 +29,6 @@ gui-apps/waybar tray pulseaudio network wifi upower
 # required by @selected
 # required by @world (argument)
 >=net-dns/avahi-0.8-r5 python
-# required by media-sound/pulseaudio-15.0-r2::gentoo[alsa,alsa-plugin]
-# required by @selected
-# required by @world (argument)
->=media-plugins/alsa-plugins-1.2.6 pulseaudio
 # required by sys-boot/os-prober-1.79-r2::gentoo
 # required by @selected
 # required by @world (argument)
@@ -64,3 +62,13 @@ gui-apps/waybar tray pulseaudio network wifi upower
 # required by @selected
 # required by @world (argument)
 >=dev-libs/libdbusmenu-16.04.0-r2 gtk3
+# required by media-libs/gegl-0.4.64-r1::gentoo
+# required by media-gfx/gimp-3.0.6::gentoo
+# required by @selected
+# required by @world (argument)
+>=media-libs/babl-0.1.116 introspection
+# required by media-gfx/gimp-3.0.6::gentoo
+# required by @selected
+# required by @world (argument)
+>=media-libs/gegl-0.4.64-r1 introspection
+

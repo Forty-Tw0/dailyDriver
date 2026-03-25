@@ -1,2 +1,3 @@
 numlockx on
+gentoo-pipewire-launcher &
 dbus-run-session sway

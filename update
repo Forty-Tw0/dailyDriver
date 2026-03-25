@@ -6,26 +6,32 @@
 # world file - contains manually installed packages
 # /var/lib/portage/world
 
-sudo emaint -a sync && sudo eix-update
+if [ "$EUID" -ne 0 ]; then
+  echo "run as root"
+  exit
+fi
+
+emaint -a sync
+eix-update
 
 # firmware updates
 fwupdmgr refresh --force && fwupdmgr get-updates && fwupdmgr update
 
-sudo ACCEPT_LICENSE="* @FREE" VIDEO_CARDS="intel amdgpu radeonsi radeon nouveau fbdev vesa" emerge --ask --update --verbose-conflicts --autounmask --autounmask-write --changed-use --deep --keep-going --with-bdeps=y --exclude="" --jobs=8 @world
-sudo dispatch-conf
+ACCEPT_LICENSE="* @FREE" VIDEO_CARDS="intel amdgpu radeonsi radeon nouveau fbdev vesa" emerge --ask --update --verbose-conflicts --autounmask --autounmask-write --changed-use --deep --keep-going --with-bdeps=y --exclude="" --jobs=8 @world
+dispatch-conf
 
 # fix
-sudo revdep-rebuild -v portage_options='--ask'
-sudo ACCEPT_LICENSE="* @FREE" perl-cleaner --all
+revdep-rebuild -v portage_options='--ask'
+ACCEPT_LICENSE="* @FREE" perl-cleaner --all
 
 # https://wiki.gentoo.org/wiki/Security_Handbook/Staying_up-to-date
 glsa-check -t all
-sudo glsa-check -f $(glsa-check -t all)
+glsa-check -f $(glsa-check -t all)
 
 # clean
-sudo emerge --ask --depclean -v
+emerge --ask --depclean -v
 eix-test-obsolete
-sudo portpeek -a
+portpeek -a
 #sudo eclean --deep distfiles
 #sudo eclean --deep packages
 # just delete all source files

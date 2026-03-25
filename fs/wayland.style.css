@@ -18,11 +18,17 @@ window {
 #battery.charging, #battery.plugged {
   color: #00ff00;
 }
-#battery.:not(.charging) {
+#battery.warning:not(.charging) {
+  color: #ffff00;
+}
+#battery:not(.charging) {
   color: #ffff00;
 }
 #battery.critical:not(.charging) {
-  color: #ff0000;
+  background-color: #ff0000;
+  color: #ffffff;
+  padding-left: 8px;
+  padding-right: 8px;
   animation-name: blink;
   animation-duration: 0.5s;
   animation-timing-function: linear;
@@ -31,8 +37,8 @@ window {
 }
 @keyframes blink {
   to {
-    background-color: #BF616A;
-    color: #A6E3A1;
+    background-color: #7f0000;
+    color: #ffffff;
   }
 }
 
