@@ -1,74 +1,51 @@
-x11-terms/rxvt-unicode 256-color perl
-media-libs/imlib2 png gif jpeg
-net-wireless/wpa_supplicant qt5
-www-client/w3m imlib
-media-video/ffmpeg openssl
-media-video/mpv dvd
-app-emulation/qemu usb
+
+# virtual/dist-kernel
+sys-kernel/installkernel dracut
+
+# system
+sys-boot/grub mount
+media-video/pipewire v4l libcamera
+
+# networking
+net-wireless/iwd standalone
+
+# printing
 net-print/cups usb
-app-text/poppler cairo
 x11-libs/gtk+ cups
-net-analyzer/nmap ncat nping zenmap
+
+# sys-power/suspend
+dev-libs/libgcrypt static-libs
+dev-libs/libgpg-error static-libs
+dev-libs/lzo static-libs
+
+# customization
 gui-wm/sway tray
 gui-apps/waybar tray network wifi upower
+
+# fonts
+app-text/poppler cairo
+media-libs/freetype harfbuzz
+
+# tools
+x11-terms/rxvt-unicode 256-color perl
+sys-fs/lvm2 lvm
+net-analyzer/nmap ncat nping zenmap
+media-video/mpv dvd
+media-video/ffmpeg openssl
+media-libs/imlib2 png gif jpeg
+
+# media-gfx/gimp
+media-libs/babl introspection
+media-libs/gegl introspection
+
+# dev tools
 net-libs/nodejs npm
 dev-db/mariadb -server
-media-video/pipewire v4l libcamera
-# required by x11-libs/pango-1.48.7::gentoo
-# required by gnome-base/librsvg-2.50.7::gentoo
-# required by app-text/evince-40.2::gentoo
-# required by @selected
-# required by @world (argument)
->=media-libs/freetype-2.10.4 harfbuzz -infinality
-# required by dev-python/PyQt5-5.15.4-r1::gentoo[multimedia]
-# required by net-print/hplip-3.20.11-r2::gentoo[python_single_target_python3_9,-minimal,qt5]
-# required by @selected
-# required by @world (argument)
->=dev-qt/qtmultimedia-5.15.2-r1 widgets
-# required by net-print/hplip-3.20.11-r2::gentoo[snmp,-minimal]
-# required by @selected
-# required by @world (argument)
->=net-dns/avahi-0.8-r5 python
-# required by sys-boot/os-prober-1.79-r2::gentoo
-# required by @selected
-# required by @world (argument)
->=sys-boot/grub-2.06-r2 mount
-# required by net-analyzer/wireshark-3.6.3::gentoo[minizip]
-# required by @selected
-# required by @world (argument)
->=sys-libs/zlib-1.2.12-r2 minizip
-# required by x11-libs/wxGTK-3.2.2.1-r2::gentoo
-# required by media-sound/audacity-3.2.5::gentoo
-# required by @selected
-# required by @world (argument)
->=dev-libs/libpcre2-10.42-r1 pcre32
-# required by www-client/firefox-115.3.1::gentoo[system-libvpx]
-# required by @selected
-# required by @world (argument)
->=media-libs/libvpx-1.13.1 postproc
-# required by sys-power/suspend-1.0_p20200924::gentoo[crypt]
-# required by suspend (argument)
->=dev-libs/libgcrypt-1.10.3-r1 static-libs
-# required by sys-power/suspend-1.0_p20200924::gentoo[crypt]
-# required by suspend (argument)
->=dev-libs/libgpg-error-1.49 static-libs
-# required by sys-power/suspend-1.0_p20200924::gentoo[lzo]
-# required by suspend (argument)
->=dev-libs/lzo-2.10 static-libs
-# required by sys-kernel/gentoo-kernel-6.6.62::gentoo[initramfs]
-# required by virtual/dist-kernel-6.6.62::gentoo
->=sys-kernel/installkernel-48-r1 dracut
-# required by gui-apps/waybar-0.11.0-r1::gentoo[tray]
-# required by @selected
-# required by @world (argument)
->=dev-libs/libdbusmenu-16.04.0-r2 gtk3
-# required by media-libs/gegl-0.4.64-r1::gentoo
-# required by media-gfx/gimp-3.0.6::gentoo
-# required by @selected
-# required by @world (argument)
->=media-libs/babl-0.1.116 introspection
-# required by media-gfx/gimp-3.0.6::gentoo
-# required by @selected
-# required by @world (argument)
->=media-libs/gegl-0.4.64-r1 introspection
+app-containers/docker-credential-helpers pass
+
+# idk
+net-dns/avahi python
+sys-libs/zlib minizip
+dev-libs/libpcre2 pcre32
+dev-libs/libdbusmenu gtk3
 

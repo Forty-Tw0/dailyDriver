@@ -81,25 +81,25 @@ emerge sys-kernel/genkernel --autounmask-write
 echo "option -3 for zz-autounmask"
 dispatch-conf
 emerge sys-kernel/genkernel
-sed -i 's/#GRUB_CMDLINE_LINUX=""/GRUB_CMDLINE_LINUX="video=efifb:off,vesafb:off iommu=pt intel_iommu=on amd_iommu=force_isolation"/g' /etc/default/grub
+sed -i 's/#GRUB_CMDLINE_LINUX=""/GRUB_CMDLINE_LINUX="video=efifb:off,vesafb:off iommu=pt intel_iommu=on amd_iommu=force_isolation amdgpu.runpm=1 usbcore.autosuspend=1"/g' /etc/default/grub
 genkernel --menuconfig all
 # genkernel always uses a fresh config, so you have to reconfigure manually or Load the old one.
 
 # bootloader
 emerge sys-boot/os-prober
 emerge sys-boot/grub
-grub-install --target=x86_64-efi --efi-directory=/boot --removable
+grub-install --target=x86_64-efi --efi-directory=/boot/efi --removable
 grub-mkconfig -o /boot/grub/grub.cfg
 
 # auto-mmount USB
-printf "UUID=$(lsblk -o name,uuid | grep sd[a-z]2 | awk '{print $2}') /boot vfat defaults 0 2\nUUID=$(lsblk -o name,uuid | grep sd[a-z]3 | awk '{print $2}') none swap sw 0 0\nUUID=$(lsblk -o name,uuid | grep sd[a-z]4 | awk '{print $2}') / ext4 noatime 0 1\n/dev/cdrom /mnt/cdrom auto noauto,user" >> /etc/fstab
+printf "UUID=$(lsblk -o name,uuid | grep sd[a-z]2 | awk '{print $2}') /boot/efi vfat defaults 0 2\nUUID=$(lsblk -o name,uuid | grep sd[a-z]3 | awk '{print $2}') none swap sw 0 0\nUUID=$(lsblk -o name,uuid | grep sd[a-z]4 | awk '{print $2}') / ext4 noatime 0 1\n/dev/cdrom /mnt/cdrom auto noauto,user" >> /etc/fstab
 
 # I had problems with really slow /dev/random init at boot and blocking at runtime
 emerge sys-apps/rng-tools
 rc-update add rngd boot
 
 # networking
-emerge net-misc/dhcpcd
-rc-update add dhcpcd default
+emerge net-wireless/iwd
+rc-update add iwd default
 
 passwd

@@ -7,6 +7,7 @@ no_focus [class=".*"]
 # Export the Wayland desktop context into D-Bus so xdg-desktop-portal
 # can auto-start the wlroots screencast backend on Sway.
 exec_always dbus-update-activation-environment WAYLAND_DISPLAY XDG_CURRENT_DESKTOP=sway
+exec swayidle -w before-sleep 'swaylock -c 000000'
 
 # KEY BINDINGS
 
@@ -25,6 +26,7 @@ bindsym XF86MonBrightnessUp exec xbacklight -inc 2
 
 bindsym $mod+Escape exec swaymsg exit
 bindsym $mod+Ctrl+Alt+r exec swaymsg reload
+bindsym $mod+l exec swaylock -c 000000
 
 bindsym $mod+Shift+q kill
 bindsym $mod+e exec dmenu_run
@@ -121,6 +123,10 @@ bar {
 		inactive_workspace #004200  #004200  #000000
 		urgent_workspace   #ff0000  #ff0000  #000000
 	}
+}
+
+input type:keyboard {
+	xkb_numlock enabled
 }
 
 input type:touchpad {

@@ -17,7 +17,11 @@ eix-update
 # firmware updates
 fwupdmgr refresh --force && fwupdmgr get-updates && fwupdmgr update
 
-ACCEPT_LICENSE="* @FREE" VIDEO_CARDS="intel amdgpu radeonsi radeon nouveau fbdev vesa" emerge --ask --update --verbose-conflicts --autounmask --autounmask-write --changed-use --deep --keep-going --with-bdeps=y --exclude="" --jobs=8 @world
+ACCEPT_LICENSE="* @FREE" CPU_FLAGS_X86="$(cpuid2cpuflags | cut -d: -f2 | xargs)" VIDEO_CARDS="intel amdgpu radeonsi radeon nouveau fbdev vesa" emerge --ask --update --verbose-conflicts --autounmask --autounmask-write --changed-use --deep --keep-going --with-bdeps=y --exclude="" --jobs=8 @world
+if [ $? -ne 0 ]; then
+  echo "emerge failed, exiting"
+  exit 1
+fi
 dispatch-conf
 
 # fix

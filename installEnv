@@ -1,61 +1,35 @@
 #!/bin/bash
 exit
 
-sed -i 's/replace-wscomments=no/replace-wscomments=yes/g' /etc/dispatch-conf.conf
-
 # list of packages to install
 cp fs/package.use /etc/portage/package.use
 cp fs/world /var/lib/portage/world
-
 sudo ACCEPT_LICENSE="* @FREE" VIDEO_CARDS="intel amdgpu radeonsi radeon nouveau fbdev vesa" emerge --ask --update --verbose-conflicts --autounmask --autounmask-write --changed-use --deep --keep-going --with-bdeps=y --jobs=8 @world
+sed -i 's/replace-wscomments=no/replace-wscomments=yes/g' /etc/dispatch-conf.conf
 sudo dispatch-conf
 
-# X
-euse -E X
-emerge x11-base/xorg-server
-emerge x11-misc/numlockx
-rc-update add numlock default
-emerge x11-misc/picom
-#emerge --ask x11-misc/xbacklight
-#emerge --ask x11-misc/redshift
-emerge x11-misc/arander
-emerge x11-wm/i3-gaps
-cp fs/i3config /etc/i3/config
-chown root:root /etc/i3/config
-emerge x11-misc/i3status
-cp fs/i3status /etc/i3/i3status
-chown root:root /etc/i3/i3status
 cp fs/sway /etc/sway/config
 mkdir -p ~/.config/waybar/
 cp fs/wayland.config ~/.config/waybar/config
 cp fs/wayland.style.css ~/.config/waybar/style.css
 cp fs/portals.conf ~/.config/xdg-desktop-portal/portals.conf
-emerge x11-misc/dmenu
-emerge x11-terms/rxvt-unicode
-emerge media-gfx/feh
-
-emerge --ask media-fonts/noto
-emerge --ask media-fonts/noto-cjk
 # disable all others in fontconfig, maybe need to sudo the xarg'd eselect if you are not root
 eselect fontconfig list | awk '{print $1}' | sed 's/[^0-9]//g' | xargs eselect fontconfig disable
 eselect fontconfig list | grep mono | awk '{print $1}' | sed 's/[^0-9]//g' | xargs eselect fontconfig enable
-#set urxvt font somehow
 
 sed -i 's/clock="UTC"/clock="local"/g' /etc/conf.d/hwclock
-
 # services
 rc-update add metalog default
 rc-update add ntpd default
 rc-update add dbus default
 cp fs/udevRules /etc/udev/rules.d/automount.rules
-emerge sys-auth/elogind
 rc-update add elogind boot
 
+# DNS
 echo "Cyberia" > /etc/hostname
 echo "127.0.0.1	Cyberia" > /etc/hosts
 printf "nameserver 127.0.0.1\noptions edns0" > /etc/resolv.conf
 chattr +i /etc/resolv.conf
-
 sed -i 's/127.0.0.1:53/127.0.0.1:5353/g' /etc/dnscrypt-proxy/dnscrypt-proxy.toml
 sed -i 's/\[::1\]:53/\[::1\]:5353/g' /etc/dnscrypt-proxy/dnscrypt-proxy.toml
 sed -i 's/9.9.9.9/1.1.1.1/g' /etc/dnscrypt-proxy/dnscrypt-proxy.toml
@@ -63,54 +37,30 @@ printf "  [static.'cloudflare']\n  stamp = 'sdns://AgcAAAAAAAAABzEuMC4wLjGgENk8m
 sed -i 's/command="\/usr\/bin\/dnscrypt-proxy/command="firejail \/usr\/bin\/dnscrypt-proxy/g' /etc/init.d/dnscrypt-proxy
 sed -i 's/command_user=/#command_user=/g' /etc/init.d/dnscrypt-proxy
 rc-update add dnscrypt-proxy default
-
 sed -i 's/# do-not-query-localhost: yes/do-not-query-localhost: no/g' /etc/unbound/unbound.conf
 printf "\nforward-zone:\nname: \".\"\nforward-addr: 127.0.0.1@5353" >> /etc/unbound/unbound.conf
-#sed -i 's/--exec/--exec firejail/g' /etc/init.d/unbound
 rc-update add unbound default
-
-printf "ctrl_interface=DIR=/run/wpa_supplicant GROUP=wheel\nupdate_config=1" > /etc/wpa_supplicant/wpa_supplicant.conf
-chmod 600 /etc/wpa_supplicant/wpa_supplicant.conf
-#echo "wpa_supplicant_args=\"-B -M -c/etc/wpa_supplicant/wpa_supplicant.conf\"" > /etc/conf.d/wpa_supplicant
-printf "modules_wlan0=\"wpa_supplicant\"\nconfig_wlan0=\"dhcp\"" > /etc/conf.d/net
-rc-update add wpa_supplicant default
 
 #hp-setup
 rc-update add cupsd default
 rc-update add cups-browsed default
 # http://localhost:631/
 
-sed -i 's/^load-module module-native-protocol-unix$/load-module module-native-protocol-unix auth-anonymous=1/g' /etc/pulse/default.pa
+# groups
 gpasswd -d root audio
 echo "%wheel ALL=(ALL) ALL" > /etc/sudoers.d/sudo
 
 # user
 useradd -ou 4242 -s /bin/bash -G portage,usb,video,wheel,cdrom,wireshark,lpadmin ljosalfur
 passwd ljosalfur
-cp fs/xinitrc /home/ljosalfur/.xinitrc
-chown ljosalfur:ljosalfur /home/ljosalfur/.xinitrc
 cp fs/.Xdefaults ~/.Xdefaults
 mkdir /home/ljosalfur/screenshots
 printf "\n# alias for suspend to ram\nalias slp=\"echo mem | sudo tee /sys/power/state > /dev/null\"" >> /home/ljosalfur/.bashrc
 printf "\nalias wipe=\"sudo grub-reboot \\\\\"Memtest86+\\\\\" && sudo reboot\"" >> /home/ljosalfur/.bashrc
-printf "\n# Ranger options\nalias ranger=\"ranger --cmd='set show_hidden true' --cmd='set vcs_aware true' --cmd='set vcs_backend_git enabled' --cmd='set preview_images_method w3m' --cmd='set preview_images true'\"\n" >> /home/ljosalfur/.bashrc
+printf "\n# Ranger options\nalias ranger=\"ranger --cmd='set show_hidden true' --cmd='set vcs_aware true' --cmd='set vcs_backend_git enabled' --cmd='set preview_images_method ueberzug' --cmd='set preview_images true'\"\n" >> /home/ljosalfur/.bashrc
 printf "\n# Slack\nalias slack=\"(cd /opt/slack && ./slack &)\"\n" >> /home/ljosalfur/.bashrc
 printf "\n# font substitution is broken in poppler\nfixpdf() { gs -o \"fixed_\$1\" -dPDFSETTINGS=/prepress -sDEVICE=pdfwrite \"\$1\"; }" >> /home/ljosalfur/.bashrc
-
 #emerge --ask dev-java/openjdk
 #wget -O /tmp/tos.sh https://mediaserver.thinkorswim.com/installer/InstFiles/thinkorswim_installer.sh
 #sh /tmp/tos.sh
 #printf "\n# ThinkOrSwim\nalias thinkorswim=\"(cd ~/thinkorswim && /usr/bin/java -jar launcher.jar -Dsun.java2d.opengl=true)\"\n" >> /home/ljosalfur/.bashrc
-
-# make links (like in slack) open with firefox
-#follow up actions
-echo "cp fs/user.js to your firefox profile"
-echo "Install firefox extensions:"
-echo "HTTPS Everywhere"
-echo "uMatrix"
-echo "uBlock Origin"
-echo "CanvasBlocker"
-echo "Google Redirects Fixer & Tracking Remover"
-echo "Privacy Badger"
-echo "Decentraleyes"
-echo "Disconnect"

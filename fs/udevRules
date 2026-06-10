@@ -4,7 +4,8 @@ KERNEL!="sd[a-z]*", GOTO="exit"
 ACTION=="add", PROGRAM!="/sbin/blkid %N", GOTO="exit"
 
 # import some useful filesystem info as variables
-IMPORT{program}="/sbin/blkid -o udev -p %N"
+ACTION!="remove", IMPORT{program}="/sbin/blkid -o udev -p %N"
+ACTION=="remove", IMPORT{db}="ID_FS_LABEL"
 
 # get the label if present, otherwise assign one based on device/partition
 ENV{ID_FS_LABEL}!="", ENV{dir_name}="%E{ID_FS_LABEL}"

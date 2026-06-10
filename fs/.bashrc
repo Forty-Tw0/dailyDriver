@@ -18,7 +18,7 @@ fi
 # Put your fun stuff here.
 
 # Ranger options
-alias ranger="ranger --cmd='set show_hidden true' --cmd='set vcs_aware true' --cmd='set vcs_backend_git enabled' --cmd='set preview_images_method w3m' --cmd='set preview_images true'"
+alias ranger="ranger --cmd='set show_hidden true' --cmd='set vcs_aware true' --cmd='set vcs_backend_git enabled' --cmd='set preview_images_method ueberzug' --cmd='set preview_images true' --cmd='set preview_script ~/.config/ranger/scope.sh' --logfile=/dev/null --cachedir=/tmp/ranger_cache && rm -rf /tmp/ranger_cache"
 
 # Slack
 alias slack="(cd /opt/slack && ./slack &)"
@@ -47,6 +47,8 @@ alias mc="ssh -i ~/lilium/Lilium.pem ubuntu@34.226.134.29"
 alias vh="ssh -i ~/lilium/Lilium.pem ubuntu@54.159.196.208"
 
 alias screenshot="gnome-screenshot --area -f ~/screenshots/\$(date +%s).png"
+
+alias gparted="sudo -E gparted"
 
 # font substitution is broken in poppler
 fixpdf() { gs -o "fixed_$1" -dPDFSETTINGS=/prepress -sDEVICE=pdfwrite "$1"; }
