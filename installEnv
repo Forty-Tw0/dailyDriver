@@ -64,3 +64,10 @@ printf "\n# font substitution is broken in poppler\nfixpdf() { gs -o \"fixed_\$1
 #wget -O /tmp/tos.sh https://mediaserver.thinkorswim.com/installer/InstFiles/thinkorswim_installer.sh
 #sh /tmp/tos.sh
 #printf "\n# ThinkOrSwim\nalias thinkorswim=\"(cd ~/thinkorswim && /usr/bin/java -jar launcher.jar -Dsun.java2d.opengl=true)\"\n" >> /home/ljosalfur/.bashrc
+
+# config
+# disable trash for Thundar (gio or gvfs trash)
+chattr +i /home/ljosalfur/.local/share/Trash/files
+chattr +i /home/ljosalfur/.local/share/Trash/info
+# disable thumbnail cache for ranger+ueberzugpp
+chattr +i /home/ljosalfur/.cache/ueberzugpp
