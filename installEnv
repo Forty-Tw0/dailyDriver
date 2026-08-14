@@ -13,9 +13,6 @@ mkdir -p ~/.config/waybar/
 cp fs/wayland.config ~/.config/waybar/config
 cp fs/wayland.style.css ~/.config/waybar/style.css
 cp fs/portals.conf ~/.config/xdg-desktop-portal/portals.conf
-# disable all others in fontconfig, maybe need to sudo the xarg'd eselect if you are not root
-eselect fontconfig list | awk '{print $1}' | sed 's/[^0-9]//g' | xargs eselect fontconfig disable
-eselect fontconfig list | grep mono | awk '{print $1}' | sed 's/[^0-9]//g' | xargs eselect fontconfig enable
 
 sed -i 's/clock="UTC"/clock="local"/g' /etc/conf.d/hwclock
 # services
@@ -59,7 +56,6 @@ printf "\n# alias for suspend to ram\nalias slp=\"echo mem | sudo tee /sys/power
 printf "\nalias wipe=\"sudo grub-reboot \\\\\"Memtest86+\\\\\" && sudo reboot\"" >> /home/ljosalfur/.bashrc
 printf "\n# Ranger options\nalias ranger=\"ranger --cmd='set show_hidden true' --cmd='set vcs_aware true' --cmd='set vcs_backend_git enabled' --cmd='set preview_images_method ueberzug' --cmd='set preview_images true'\"\n" >> /home/ljosalfur/.bashrc
 printf "\n# Slack\nalias slack=\"(cd /opt/slack && ./slack &)\"\n" >> /home/ljosalfur/.bashrc
-printf "\n# font substitution is broken in poppler\nfixpdf() { gs -o \"fixed_\$1\" -dPDFSETTINGS=/prepress -sDEVICE=pdfwrite \"\$1\"; }" >> /home/ljosalfur/.bashrc
 #emerge --ask dev-java/openjdk
 #wget -O /tmp/tos.sh https://mediaserver.thinkorswim.com/installer/InstFiles/thinkorswim_installer.sh
 #sh /tmp/tos.sh

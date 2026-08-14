@@ -33,6 +33,7 @@ net-analyzer/nmap ncat nping zenmap
 media-video/mpv dvd
 media-video/ffmpeg openssl
 media-libs/imlib2 png gif jpeg
+gnome-base/gvfs mtp
 
 # media-gfx/gimp
 media-libs/babl introspection
