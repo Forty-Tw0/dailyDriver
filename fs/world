@@ -26,6 +26,7 @@ dev-debug/valgrind
 dev-java/openjdk-bin
 dev-python/pandas
 dev-python/pip
+dev-python/plotly
 dev-python/scipy
 dev-util/claude-code
 dev-vcs/git
@@ -58,7 +59,7 @@ net-analyzer/nmap
 net-analyzer/tcpdump
 net-analyzer/traceroute
 net-analyzer/wireshark
-net-dns/dnscrypt-proxy
+net-dns/bind
 net-dns/unbound
 net-fs/sshfs
 net-im/discord
@@ -71,6 +72,7 @@ net-p2p/rtorrent
 net-print/cups
 net-print/cups-filters
 net-print/hplip
+net-vpn/tailscale
 net-wireless/iwd
 sys-apps/dmidecode
 sys-apps/firejail
